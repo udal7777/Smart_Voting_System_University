@@ -24,10 +24,9 @@ def is_admin():
 
 # Helper function to validate university email
 def is_valid_university_email(email):
-    # This pattern checks for common university email domains
-    # You can modify it to match your specific university domain
-    university_pattern = r'^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.edu|university\.[a-zA-Z0-9.-]+|[a-zA-Z0-9.-]+\.ac\.[a-zA-Z0-9-]+)$'
-    return re.match(university_pattern, email) is not None
+    # Specific pattern to match only indoreinstitute.com domain
+    indore_institute_pattern = r'^[a-zA-Z0-9._%+-]+@indoreinstitute\.com$'
+    return re.match(indore_institute_pattern, email) is not None
 
 # Helper function for verification (placeholder for now)
 def generate_verification_url(token):
@@ -56,10 +55,11 @@ def voter_register():
         email = request.form.get('email')
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
+        face_data = request.form.get('face_data')
         
         # Validate input
-        if not all([enrollment_id, email, password, confirm_password]):
-            flash('All fields are required', 'danger')
+        if not all([enrollment_id, email, password, confirm_password, face_data]):
+            flash('All fields including face capture are required', 'danger')
             return render_template('voter_register.html')
         
         if password != confirm_password:
@@ -68,7 +68,7 @@ def voter_register():
         
         # Validate email format
         if not is_valid_university_email(email):
-            flash('Please use a valid university email address', 'danger')
+            flash('Please use a valid university email address (@indoreinstitute.com)', 'danger')
             return render_template('voter_register.html')
         
         # Check if user already exists
@@ -77,12 +77,21 @@ def voter_register():
             flash('User with this enrollment ID or email already exists', 'danger')
             return render_template('voter_register.html')
         
+        # Process face data
+        from face_utils import get_face_encoding
+        face_encoding, error = get_face_encoding(face_data)
+        
+        if error:
+            flash(f'Face registration failed: {error}', 'danger')
+            return render_template('voter_register.html')
+        
         # Create new user
         new_user = User(
             enrollment_id=enrollment_id,
             email=email,
             role='voter',
-            is_verified=True  # Auto-verify for now (since we don't have email functionality)
+            is_verified=True,  # Auto-verify for now (since we don't have email functionality)
+            face_encoding=face_encoding
         )
         new_user.set_password(password)
         
@@ -129,10 +138,11 @@ def voter_login():
     if request.method == 'POST':
         enrollment_id = request.form.get('enrollment_id')
         password = request.form.get('password')
+        face_data = request.form.get('face_data')
         
         # Validate input
-        if not all([enrollment_id, password]):
-            flash('All fields are required', 'danger')
+        if not all([enrollment_id, password, face_data]):
+            flash('All fields including face capture are required', 'danger')
             return render_template('voter_login.html')
         
         # Get user
@@ -149,6 +159,23 @@ def voter_login():
         # Check password
         if not user.check_password(password):
             flash('Invalid enrollment ID or password', 'danger')
+            return render_template('voter_login.html')
+        
+        # Check face authentication
+        if not user.face_encoding:
+            flash('Face authentication data is missing. Please contact support.', 'danger')
+            return render_template('voter_login.html')
+        
+        # Compare face with stored encoding
+        from face_utils import compare_faces
+        match, error = compare_faces(user.face_encoding, face_data)
+        
+        if error:
+            flash(f'Face authentication error: {error}', 'danger')
+            return render_template('voter_login.html')
+        
+        if not match:
+            flash('Face authentication failed. Please try again.', 'danger')
             return render_template('voter_login.html')
         
         # Login successful
