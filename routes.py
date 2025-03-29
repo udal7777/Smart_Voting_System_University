@@ -166,10 +166,11 @@ def admin_register():
         email = request.form.get('email')
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
+        face_data = request.form.get('face_data')
         
         # Validate input
-        if not all([enrollment_id, email, password, confirm_password]):
-            flash('All fields are required', 'danger')
+        if not all([enrollment_id, email, password, confirm_password, face_data]):
+            flash('All fields including face capture are required', 'danger')
             return render_template('admin_register.html')
         
         if password != confirm_password:
@@ -187,12 +188,21 @@ def admin_register():
             flash('User with this enrollment ID or email already exists', 'danger')
             return render_template('admin_register.html')
         
+        # Process face data
+        from face_utils import get_face_encoding
+        face_encoding, error = get_face_encoding(face_data)
+        
+        if error:
+            flash(f'Face registration failed: {error}', 'danger')
+            return render_template('admin_register.html')
+        
         # Create new admin user
         new_admin = User(
             enrollment_id=enrollment_id,
             email=email,
             role='admin',
-            is_verified=True  # Auto-verify for now
+            is_verified=True,  # Auto-verify for now
+            face_encoding=face_encoding
         )
         new_admin.set_password(password)
         
@@ -215,10 +225,11 @@ def admin_login():
     if request.method == 'POST':
         enrollment_id = request.form.get('enrollment_id')
         password = request.form.get('password')
+        face_data = request.form.get('face_data')
         
         # Validate input
-        if not all([enrollment_id, password]):
-            flash('All fields are required', 'danger')
+        if not all([enrollment_id, password, face_data]):
+            flash('All fields including face capture are required', 'danger')
             return render_template('admin_login.html')
         
         # Get admin user
@@ -235,6 +246,23 @@ def admin_login():
         # Check password
         if not admin.check_password(password):
             flash('Invalid enrollment ID or password', 'danger')
+            return render_template('admin_login.html')
+        
+        # Check face authentication
+        if not admin.face_encoding:
+            flash('Face authentication data is missing. Please contact support.', 'danger')
+            return render_template('admin_login.html')
+        
+        # Compare face with stored encoding
+        from face_utils import compare_faces
+        match, error = compare_faces(admin.face_encoding, face_data)
+        
+        if error:
+            flash(f'Face authentication error: {error}', 'danger')
+            return render_template('admin_login.html')
+        
+        if not match:
+            flash('Face authentication failed. Please try again.', 'danger')
             return render_template('admin_login.html')
         
         # Login successful

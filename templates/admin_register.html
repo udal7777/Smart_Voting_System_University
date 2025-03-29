@@ -1,46 +1,81 @@
 {% extends 'base.html' %}
 
+{% block extra_head %}
+<!-- Webcam.js for camera integration -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-lg-8">
             <div class="card shadow">
                 <div class="card-header bg-primary text-white">
                     <h3 class="mb-0">Admin Registration</h3>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('admin_register') }}">
-                        <div class="mb-3">
-                            <label for="enrollment_id" class="form-label">Enrollment/Staff ID</label>
-                            <input type="text" class="form-control" id="enrollment_id" name="enrollment_id" required>
-                            <div class="form-text">Your university staff or faculty ID</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="email" class="form-label">University Email</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                            <div class="form-text">Must be your university email address</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                            <div class="form-text">Must be at least 8 characters</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="confirm_password" class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                        </div>
-                        
-                        <div class="alert alert-info">
-                            <h5><i class="fas fa-info-circle me-2"></i>Admin Responsibilities</h5>
-                            <ul class="mb-0">
-                                <li>Create and manage elections</li>
-                                <li>Register candidates for elections</li>
-                                <li>View real-time voting results</li>
-                                <li>Monitor election participation</li>
-                            </ul>
+                    <form id="registrationForm" method="POST" action="{{ url_for('admin_register') }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="enrollment_id" class="form-label">Enrollment/Staff ID</label>
+                                    <input type="text" class="form-control" id="enrollment_id" name="enrollment_id" required>
+                                    <div class="form-text">Your university staff or faculty ID</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">University Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                    <div class="form-text">Must be your university email address</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <div class="form-text">Must be at least 8 characters</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirm Password</label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <h5><i class="fas fa-info-circle me-2"></i>Admin Responsibilities</h5>
+                                    <ul class="mb-0">
+                                        <li>Create and manage elections</li>
+                                        <li>Register candidates for elections</li>
+                                        <li>View real-time voting results</li>
+                                        <li>Monitor election participation</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Face Registration</label>
+                                    <div class="face-capture-area border rounded p-2 mb-2">
+                                        <div id="camera" class="d-flex justify-content-center"></div>
+                                        <div id="captured_image" class="d-flex justify-content-center mt-2" style="display: none;"></div>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button type="button" id="startCamera" class="btn btn-outline-primary">Start Camera</button>
+                                        <button type="button" id="captureImage" class="btn btn-primary" disabled>Capture Image</button>
+                                        <button type="button" id="recaptureImage" class="btn btn-secondary" style="display: none;">Recapture</button>
+                                    </div>
+                                    <!-- Hidden input to store face data -->
+                                    <input type="hidden" id="face_data" name="face_data">
+                                </div>
+                                
+                                <div class="alert alert-info mt-3">
+                                    <h5><i class="fas fa-info-circle me-2"></i>Important Information</h5>
+                                    <ul class="mb-0">
+                                        <li>Your face will be used for authentication when logging in</li>
+                                        <li>Ensure you take your photo in good lighting</li>
+                                        <li>Look directly at the camera</li>
+                                        <li>Position your face within the frame</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="form-check mb-3">
@@ -51,7 +86,7 @@
                         </div>
                         
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Register</button>
+                            <button type="submit" id="submitBtn" class="btn btn-primary" disabled>Register</button>
                         </div>
                     </form>
                     
@@ -69,6 +104,72 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const startCameraBtn = document.getElementById('startCamera');
+        const captureBtn = document.getElementById('captureImage');
+        const recaptureBtn = document.getElementById('recaptureImage');
+        const submitBtn = document.getElementById('submitBtn');
+        const faceDataInput = document.getElementById('face_data');
+        const termsCheckbox = document.getElementById('terms');
+        
+        let cameraStarted = false;
+        let imageCaptured = false;
+        
+        // Initialize webcam
+        function initializeCamera() {
+            Webcam.set({
+                width: 320,
+                height: 240,
+                image_format: 'jpeg',
+                jpeg_quality: 90,
+                facingMode: 'user'
+            });
+            
+            Webcam.attach('#camera');
+            cameraStarted = true;
+            captureBtn.disabled = false;
+            startCameraBtn.disabled = true;
+        }
+        
+        // Start camera
+        startCameraBtn.addEventListener('click', function() {
+            initializeCamera();
+        });
+        
+        // Capture image
+        captureBtn.addEventListener('click', function() {
+            Webcam.snap(function(data_uri) {
+                document.getElementById('captured_image').innerHTML = 
+                    '<img src="' + data_uri + '" class="img-fluid"/>';
+                document.getElementById('captured_image').style.display = 'block';
+                document.getElementById('camera').style.display = 'none';
+                faceDataInput.value = data_uri;
+                imageCaptured = true;
+                captureBtn.style.display = 'none';
+                recaptureBtn.style.display = 'block';
+                updateSubmitButton();
+            });
+        });
+        
+        // Recapture image
+        recaptureBtn.addEventListener('click', function() {
+            document.getElementById('captured_image').style.display = 'none';
+            document.getElementById('camera').style.display = 'block';
+            recaptureBtn.style.display = 'none';
+            captureBtn.style.display = 'block';
+            imageCaptured = false;
+            updateSubmitButton();
+        });
+        
+        // Update submit button state
+        function updateSubmitButton() {
+            submitBtn.disabled = !(imageCaptured && termsCheckbox.checked);
+        }
+        
+        // Check terms checkbox
+        termsCheckbox.addEventListener('change', function() {
+            updateSubmitButton();
+        });
+        
         // Form validation for password matching
         const password = document.getElementById('password');
         const confirmPassword = document.getElementById('confirm_password');
@@ -83,6 +184,14 @@
         
         password.addEventListener('change', validatePassword);
         confirmPassword.addEventListener('keyup', validatePassword);
+        
+        // Form submission validation
+        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            if (!imageCaptured) {
+                event.preventDefault();
+                alert('Please capture your face image for registration');
+            }
+        });
     });
 </script>
 {% endblock %}
