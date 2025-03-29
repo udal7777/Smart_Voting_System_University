@@ -351,8 +351,10 @@ def vote_in_election(election_id):
         flash('This election is not active', 'warning')
         return redirect(url_for('voter_dashboard'))
     
-    current_time = datetime.datetime.utcnow()
-    if current_time < election.start_date or current_time > election.end_date:
+    # Get current time for date checks and template
+    now = datetime.datetime.utcnow()
+    
+    if now < election.start_date or now > election.end_date:
         flash('This election is not currently open for voting', 'warning')
         return redirect(url_for('voter_dashboard'))
     
@@ -370,13 +372,13 @@ def vote_in_election(election_id):
         
         if not candidate_id:
             flash('Please select a candidate', 'danger')
-            return render_template('vote.html', election=election, candidates=candidates)
+            return render_template('vote.html', election=election, candidates=candidates, now=now)
         
         # Verify candidate is valid for this election
         candidate = Candidate.query.get(candidate_id)
         if not candidate or candidate.election_id != election_id:
             flash('Invalid candidate selection', 'danger')
-            return render_template('vote.html', election=election, candidates=candidates)
+            return render_template('vote.html', election=election, candidates=candidates, now=now)
         
         # Record the vote
         new_vote = Vote(
@@ -395,7 +397,7 @@ def vote_in_election(election_id):
             logging.error(f"Error recording vote: {str(e)}")
             flash('An error occurred while recording your vote. Please try again.', 'danger')
     
-    return render_template('vote.html', election=election, candidates=candidates)
+    return render_template('vote.html', election=election, candidates=candidates, now=now)
 
 # Admin Dashboard
 @app.route('/admin/dashboard')
@@ -617,10 +619,14 @@ def view_results(election_id):
     # Get total votes
     total_votes = Vote.query.filter_by(election_id=election_id).count()
     
+    # Add current time for template
+    now = datetime.datetime.utcnow()
+    
     return render_template('vote_results.html', 
                           election=election, 
                           results=results,
-                          total_votes=total_votes)
+                          total_votes=total_votes,
+                          now=now)
 
 # API: Real-time Vote Counts
 @app.route('/api/election/<int:election_id>/results')
@@ -658,20 +664,25 @@ def api_election_results(election_id):
     # Get total votes
     total_votes = Vote.query.filter_by(election_id=election_id).count()
     
+    # Add current time for template conditions
+    now = datetime.datetime.utcnow()
+    
     return jsonify({
         'election': {
             'id': election.id,
             'title': election.title,
             'start_date': election.start_date.isoformat(),
             'end_date': election.end_date.isoformat(),
-            'is_active': election.is_active
+            'is_active': election.is_active,
+            'is_ongoing': election.end_date > now
         },
         'results': results,
         'total_votes': total_votes,
         'chart_data': {
             'labels': labels,
             'data': data
-        }
+        },
+        'now': now.isoformat()
     })
 
 # Toggle Election Status
