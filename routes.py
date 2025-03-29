@@ -50,6 +50,9 @@ def index():
 # Voter Registration
 @app.route('/voter/register', methods=['GET', 'POST'])
 def voter_register():
+    # Get current time for template
+    now = datetime.datetime.utcnow()
+    
     if request.method == 'POST':
         enrollment_id = request.form.get('enrollment_id')
         email = request.form.get('email')
@@ -60,22 +63,22 @@ def voter_register():
         # Validate input
         if not all([enrollment_id, email, password, confirm_password, face_data]):
             flash('All fields including face capture are required', 'danger')
-            return render_template('voter_register.html')
+            return render_template('voter_register.html', now=now)
         
         if password != confirm_password:
             flash('Passwords do not match', 'danger')
-            return render_template('voter_register.html')
+            return render_template('voter_register.html', now=now)
         
         # Validate email format
         if not is_valid_university_email(email):
             flash('Please use a valid university email address (@indoreinstitute.com)', 'danger')
-            return render_template('voter_register.html')
+            return render_template('voter_register.html', now=now)
         
         # Check if user already exists
         existing_user = User.query.filter((User.enrollment_id == enrollment_id) | (User.email == email)).first()
         if existing_user:
             flash('User with this enrollment ID or email already exists', 'danger')
-            return render_template('voter_register.html')
+            return render_template('voter_register.html', now=now)
         
         # Process face data
         from face_utils import get_face_encoding
@@ -83,7 +86,7 @@ def voter_register():
         
         if error:
             flash(f'Face registration failed: {error}', 'danger')
-            return render_template('voter_register.html')
+            return render_template('voter_register.html', now=now)
         
         # Create new user
         new_user = User(
@@ -105,8 +108,9 @@ def voter_register():
             db.session.rollback()
             logging.error(f"Database error: {str(e)}")
             flash('An error occurred during registration. Please try again.', 'danger')
+            return render_template('voter_register.html', now=now)
     
-    return render_template('voter_register.html')
+    return render_template('voter_register.html', now=now)
 
 # Email verification
 @app.route('/verify-email/<token>')
@@ -135,6 +139,9 @@ def verify_email(token):
 # Voter Login
 @app.route('/voter/login', methods=['GET', 'POST'])
 def voter_login():
+    # Get current time for template
+    now = datetime.datetime.utcnow()
+    
     if request.method == 'POST':
         enrollment_id = request.form.get('enrollment_id')
         password = request.form.get('password')
@@ -143,28 +150,28 @@ def voter_login():
         # Validate input
         if not all([enrollment_id, password, face_data]):
             flash('All fields including face capture are required', 'danger')
-            return render_template('voter_login.html')
+            return render_template('voter_login.html', now=now)
         
         # Get user
         user = User.query.filter_by(enrollment_id=enrollment_id, role='voter').first()
         if not user:
             flash('Invalid enrollment ID or password', 'danger')
-            return render_template('voter_login.html')
+            return render_template('voter_login.html', now=now)
         
         # Check if user is verified
         if not user.is_verified:
             flash('Please verify your email before logging in', 'warning')
-            return render_template('voter_login.html')
+            return render_template('voter_login.html', now=now)
         
         # Check password
         if not user.check_password(password):
             flash('Invalid enrollment ID or password', 'danger')
-            return render_template('voter_login.html')
+            return render_template('voter_login.html', now=now)
         
         # Check face authentication
         if not user.face_encoding:
             flash('Face authentication data is missing. Please contact support.', 'danger')
-            return render_template('voter_login.html')
+            return render_template('voter_login.html', now=now)
         
         # Compare face with stored encoding
         from face_utils import compare_faces
@@ -172,22 +179,25 @@ def voter_login():
         
         if error:
             flash(f'Face authentication error: {error}', 'danger')
-            return render_template('voter_login.html')
+            return render_template('voter_login.html', now=now)
         
         if not match:
             flash('Face authentication failed. Please try again.', 'danger')
-            return render_template('voter_login.html')
+            return render_template('voter_login.html', now=now)
         
         # Login successful
         session['user_id'] = user.id
         flash('Login successful!', 'success')
         return redirect(url_for('voter_dashboard'))
     
-    return render_template('voter_login.html')
+    return render_template('voter_login.html', now=now)
 
 # Admin Registration
 @app.route('/admin/register', methods=['GET', 'POST'])
 def admin_register():
+    # Get current time for template
+    now = datetime.datetime.utcnow()
+    
     if request.method == 'POST':
         enrollment_id = request.form.get('enrollment_id')
         email = request.form.get('email')
@@ -198,22 +208,22 @@ def admin_register():
         # Validate input
         if not all([enrollment_id, email, password, confirm_password, face_data]):
             flash('All fields including face capture are required', 'danger')
-            return render_template('admin_register.html')
+            return render_template('admin_register.html', now=now)
         
         if password != confirm_password:
             flash('Passwords do not match', 'danger')
-            return render_template('admin_register.html')
+            return render_template('admin_register.html', now=now)
         
         # Validate email format
         if not is_valid_university_email(email):
             flash('Please use a valid university email address', 'danger')
-            return render_template('admin_register.html')
+            return render_template('admin_register.html', now=now)
         
         # Check if user already exists
         existing_user = User.query.filter((User.enrollment_id == enrollment_id) | (User.email == email)).first()
         if existing_user:
             flash('User with this enrollment ID or email already exists', 'danger')
-            return render_template('admin_register.html')
+            return render_template('admin_register.html', now=now)
         
         # Process face data
         from face_utils import get_face_encoding
@@ -221,7 +231,7 @@ def admin_register():
         
         if error:
             flash(f'Face registration failed: {error}', 'danger')
-            return render_template('admin_register.html')
+            return render_template('admin_register.html', now=now)
         
         # Create new admin user
         new_admin = User(
@@ -243,12 +253,16 @@ def admin_register():
             db.session.rollback()
             logging.error(f"Database error: {str(e)}")
             flash('An error occurred during registration. Please try again.', 'danger')
+            return render_template('admin_register.html', now=now)
     
-    return render_template('admin_register.html')
+    return render_template('admin_register.html', now=now)
 
 # Admin Login
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
+    # Get current time for template
+    now = datetime.datetime.utcnow()
+    
     if request.method == 'POST':
         enrollment_id = request.form.get('enrollment_id')
         password = request.form.get('password')
@@ -257,28 +271,28 @@ def admin_login():
         # Validate input
         if not all([enrollment_id, password, face_data]):
             flash('All fields including face capture are required', 'danger')
-            return render_template('admin_login.html')
+            return render_template('admin_login.html', now=now)
         
         # Get admin user
         admin = User.query.filter_by(enrollment_id=enrollment_id, role='admin').first()
         if not admin:
             flash('Invalid enrollment ID or password', 'danger')
-            return render_template('admin_login.html')
+            return render_template('admin_login.html', now=now)
         
         # Check if admin is verified
         if not admin.is_verified:
             flash('Please verify your email before logging in', 'warning')
-            return render_template('admin_login.html')
+            return render_template('admin_login.html', now=now)
         
         # Check password
         if not admin.check_password(password):
             flash('Invalid enrollment ID or password', 'danger')
-            return render_template('admin_login.html')
+            return render_template('admin_login.html', now=now)
         
         # Check face authentication
         if not admin.face_encoding:
             flash('Face authentication data is missing. Please contact support.', 'danger')
-            return render_template('admin_login.html')
+            return render_template('admin_login.html', now=now)
         
         # Compare face with stored encoding
         from face_utils import compare_faces
@@ -286,18 +300,18 @@ def admin_login():
         
         if error:
             flash(f'Face authentication error: {error}', 'danger')
-            return render_template('admin_login.html')
+            return render_template('admin_login.html', now=now)
         
         if not match:
             flash('Face authentication failed. Please try again.', 'danger')
-            return render_template('admin_login.html')
+            return render_template('admin_login.html', now=now)
         
         # Login successful
         session['user_id'] = admin.id
         flash('Admin login successful!', 'success')
         return redirect(url_for('admin_dashboard'))
     
-    return render_template('admin_login.html')
+    return render_template('admin_login.html', now=now)
 
 # Voter Dashboard
 @app.route('/voter/dashboard')
@@ -312,11 +326,14 @@ def voter_dashboard():
     if user.is_admin():
         return redirect(url_for('admin_dashboard'))
     
+    # Get current time for template and queries
+    now = datetime.datetime.utcnow()
+    
     # Get active elections
     active_elections = Election.query.filter(
         Election.is_active == True,
-        Election.start_date <= datetime.datetime.utcnow(),
-        Election.end_date >= datetime.datetime.utcnow()
+        Election.start_date <= now,
+        Election.end_date >= now
     ).all()
     
     # Get user's votes
@@ -329,7 +346,8 @@ def voter_dashboard():
     return render_template('voter_dashboard.html', 
                           user=user, 
                           available_elections=available_elections,
-                          voted_election_ids=voted_election_ids)
+                          voted_election_ids=voted_election_ids,
+                          now=now)
 
 # Vote in an election
 @app.route('/voter/vote/<int:election_id>', methods=['GET', 'POST'])
@@ -413,11 +431,14 @@ def admin_dashboard():
         flash('You do not have permission to access this page', 'danger')
         return redirect(url_for('voter_dashboard'))
     
+    # Get current time for template
+    now = datetime.datetime.utcnow()
+    
     # Get all elections created by this admin
     elections = Election.query.filter_by(created_by=user_id).order_by(Election.created_at.desc()).all()
     
     # Get active elections count
-    active_count = sum(1 for e in elections if e.is_active and e.end_date >= datetime.datetime.utcnow())
+    active_count = sum(1 for e in elections if e.is_active and e.end_date >= now)
     
     # Get total candidates count
     total_candidates = Candidate.query.join(Election).filter(Election.created_by == user_id).count()
@@ -430,7 +451,8 @@ def admin_dashboard():
                           elections=elections,
                           active_count=active_count,
                           total_candidates=total_candidates,
-                          total_votes=total_votes)
+                          total_votes=total_votes,
+                          now=now)
 
 # Create Election
 @app.route('/admin/create-election', methods=['GET', 'POST'])
@@ -441,6 +463,9 @@ def create_election():
     
     user_id = session.get('user_id')
     
+    # Get current time for template
+    now = datetime.datetime.utcnow()
+    
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
@@ -450,7 +475,7 @@ def create_election():
         # Validate input
         if not all([title, start_date_str, end_date_str]):
             flash('Title, start date, and end date are required', 'danger')
-            return render_template('create_election.html')
+            return render_template('create_election.html', now=now)
         
         try:
             # Parse dates
@@ -460,7 +485,7 @@ def create_election():
             # Validate dates
             if start_date >= end_date:
                 flash('End date must be after start date', 'danger')
-                return render_template('create_election.html')
+                return render_template('create_election.html', now=now)
             
             # Create new election
             new_election = Election(
@@ -484,7 +509,7 @@ def create_election():
             logging.error(f"Error creating election: {str(e)}")
             flash('An error occurred while creating the election', 'danger')
     
-    return render_template('create_election.html')
+    return render_template('create_election.html', now=now)
 
 # Manage Candidates
 @app.route('/admin/election/<int:election_id>/candidates', methods=['GET', 'POST'])
@@ -506,6 +531,9 @@ def manage_candidates(election_id):
     # Get candidates for this election
     candidates = Candidate.query.filter_by(election_id=election_id).all()
     
+    # Get current time for template
+    now = datetime.datetime.utcnow()
+    
     if request.method == 'POST':
         name = request.form.get('name')
         enrollment_id = request.form.get('enrollment_id')
@@ -515,7 +543,7 @@ def manage_candidates(election_id):
         # Validate input
         if not all([name, enrollment_id, position]):
             flash('Name, enrollment ID, and position are required', 'danger')
-            return render_template('manage_candidates.html', election=election, candidates=candidates)
+            return render_template('manage_candidates.html', election=election, candidates=candidates, now=now)
         
         # Check if candidate already exists in this election
         existing_candidate = Candidate.query.filter_by(
@@ -525,7 +553,7 @@ def manage_candidates(election_id):
         
         if existing_candidate:
             flash('A candidate with this enrollment ID already exists in this election', 'danger')
-            return render_template('manage_candidates.html', election=election, candidates=candidates)
+            return render_template('manage_candidates.html', election=election, candidates=candidates, now=now)
         
         # Create new candidate
         new_candidate = Candidate(
@@ -546,7 +574,7 @@ def manage_candidates(election_id):
             logging.error(f"Error adding candidate: {str(e)}")
             flash('An error occurred while adding the candidate', 'danger')
     
-    return render_template('manage_candidates.html', election=election, candidates=candidates)
+    return render_template('manage_candidates.html', election=election, candidates=candidates, now=now)
 
 # Delete Candidate
 @app.route('/admin/delete-candidate/<int:candidate_id>', methods=['POST'])
