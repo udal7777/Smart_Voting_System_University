@@ -487,6 +487,11 @@ def create_election():
                 flash('End date must be after start date', 'danger')
                 return render_template('create_election.html', now=now)
             
+            # If start date is in the future, set it to now to make it immediately available
+            if start_date > now:
+                print(f"Adjusting start date from {start_date} to current time {now}")
+                start_date = now
+            
             # Create new election
             new_election = Election(
                 title=title,
