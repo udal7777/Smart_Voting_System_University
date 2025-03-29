@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Secure University Voting System</h1>
+                <p class="lead mb-4">A modern and secure platform for university elections with facial recognition authentication.</p>
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{{ url_for('voter_register') }}" class="btn btn-primary btn-lg px-4 me-md-2">Register as Voter</a>
+                    <a href="{{ url_for('admin_register') }}" class="btn btn-outline-secondary btn-lg px-4">Register as Admin</a>
+                </div>
+            </div>
+            <div class="col-lg-6 mt-5 mt-lg-0 text-center">
+                <svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg" class="img-fluid" style="max-height: 400px;">
+                    <!-- Ballot Box SVG -->
+                    <rect x="150" y="200" width="200" height="150" fill="#444" stroke="#666" stroke-width="5" rx="10"/>
+                    <rect x="200" y="150" width="100" height="50" fill="#555" stroke="#666" stroke-width="5"/>
+                    <rect x="225" y="175" width="50" height="10" fill="#333" stroke="#666" stroke-width="2"/>
+                    <!-- Ballot -->
+                    <g transform="rotate(-15, 250, 160)">
+                        <rect x="220" y="100" width="60" height="80" fill="#eee" stroke="#333" stroke-width="2"/>
+                        <line x1="230" y1="120" x2="270" y2="120" stroke="#333" stroke-width="2"/>
+                        <line x1="230" y1="140" x2="270" y2="140" stroke="#333" stroke-width="2"/>
+                        <line x1="230" y1="160" x2="270" y2="160" stroke="#333" stroke-width="2"/>
+                        <circle cx="235" cy="120" r="3" fill="#333"/>
+                    </g>
+                    <!-- Face recognition frame -->
+                    <rect x="330" y="100" width="100" height="120" fill="none" stroke="#39c" stroke-width="3" rx="5"/>
+                    <circle cx="380" cy="135" r="20" fill="none" stroke="#39c" stroke-width="3"/>
+                    <circle cx="380" cy="135" r="5" fill="#39c"/>
+                    <path d="M355 175 Q380 195 405 175" fill="none" stroke="#39c" stroke-width="3"/>
+                    <!-- Scanning line animation -->
+                    <line x1="330" y1="150" x2="430" y2="150" stroke="#39c" stroke-width="2" stroke-dasharray="5,5">
+                        <animate attributeName="y1" values="110;210;110" dur="3s" repeatCount="indefinite"/>
+                        <animate attributeName="y2" values="110;210;110" dur="3s" repeatCount="indefinite"/>
+                    </line>
+                </svg>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-dark">
+    <div class="container">
+        <h2 class="text-center mb-5">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-user-plus fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">Register</h5>
+                        <p class="card-text">Sign up with your university enrollment ID and email. Register your face for secure authentication.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-camera fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">Authenticate</h5>
+                        <p class="card-text">Log in securely with facial recognition technology to verify your identity.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-vote-yea fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title">Vote</h5>
+                        <p class="card-text">Cast your vote in ongoing university elections securely and easily.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2 class="mb-4">For Administrators</h2>
+                <p class="mb-4">As an admin, you can create and manage elections, register candidates, and view real-time voting results.</p>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> Create and manage elections</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> Register candidates</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> View real-time vote counts</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> Generate election reports</li>
+                </ul>
+                <a href="{{ url_for('admin_register') }}" class="btn btn-outline-primary">Register as Admin</a>
+            </div>
+            <div class="col-md-6 mt-4 mt-md-0">
+                <h2 class="mb-4">For Voters</h2>
+                <p class="mb-4">As a voter, you can participate in university elections with the security of facial recognition authentication.</p>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> Register with your university enrollment ID</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> Authenticate with facial recognition</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> Vote in active elections</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> Track your voting history</li>
+                </ul>
+                <a href="{{ url_for('voter_register') }}" class="btn btn-primary">Register as Voter</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

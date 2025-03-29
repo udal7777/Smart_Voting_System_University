@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="mb-0">Admin Dashboard</h1>
+            <p class="lead">Welcome, {{ user.enrollment_id }}</p>
+        </div>
+        <div class="col-md-4 text-md-end d-flex align-items-center justify-content-md-end">
+            <a href="{{ url_for('create_election') }}" class="btn btn-primary me-2">
+                <i class="fas fa-plus-circle me-2"></i>Create Election
+            </a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
+                <i class="fas fa-sign-out-alt me-2"></i>Logout
+            </a>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase">Active Elections</h6>
+                            <h2 class="mb-0">{{ active_count }}</h2>
+                        </div>
+                        <i class="fas fa-vote-yea fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase">Total Candidates</h6>
+                            <h2 class="mb-0">{{ total_candidates }}</h2>
+                        </div>
+                        <i class="fas fa-users fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase">Total Votes</h6>
+                            <h2 class="mb-0">{{ total_votes }}</h2>
+                        </div>
+                        <i class="fas fa-ballot-check fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Your Elections</h4>
+            <a href="{{ url_for('create_election') }}" class="btn btn-light btn-sm">
+                <i class="fas fa-plus me-1"></i> New Election
+            </a>
+        </div>
+        <div class="card-body">
+            {% if elections %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                                <th>Candidates</th>
+                                <th>Votes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for election in elections %}
+                                <tr>
+                                    <td>{{ election.title }}</td>
+                                    <td>{{ election.start_date.strftime('%d %b %Y, %H:%M') }}</td>
+                                    <td>{{ election.end_date.strftime('%d %b %Y, %H:%M') }}</td>
+                                    <td>
+                                        {% if election.is_active and election.start_date <= now and election.end_date >= now %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% elif election.is_active and election.start_date > now %}
+                                            <span class="badge bg-info">Upcoming</span>
+                                        {% elif election.is_active and election.end_date < now %}
+                                            <span class="badge bg-secondary">Ended</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ election.candidates|length }}</td>
+                                    <td>{{ election.votes|length }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('manage_candidates', election_id=election.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-users me-1"></i> Candidates
+                                            </a>
+                                            <a href="{{ url_for('view_results', election_id=election.id) }}" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-chart-bar me-1"></i> Results
+                                            </a>
+                                            <form method="POST" action="{{ url_for('toggle_election', election_id=election.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-{{ 'danger' if election.is_active else 'success' }}">
+                                                    <i class="fas fa-{{ 'toggle-off' if election.is_active else 'toggle-on' }} me-1"></i>
+                                                    {{ 'Deactivate' if election.is_active else 'Activate' }}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-ballot-check fa-4x text-muted"></i>
+                    </div>
+                    <h5>No Elections Created Yet</h5>
+                    <p class="text-muted">Create your first election to get started</p>
+                    <a href="{{ url_for('create_election') }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Create Election
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

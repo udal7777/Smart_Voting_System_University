@@ -1,0 +1,116 @@
+/* Custom styles for University Voting System */
+
+/* Global styles */
+.bg-dark {
+    background-color: var(--bs-gray-900) !important;
+}
+
+/* Card styles */
+.card {
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1rem;
+}
+
+/* Face capture area */
+.face-capture-area {
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bs-gray-800);
+}
+
+#camera, #captured_image {
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+/* Custom button styles */
+.btn-primary {
+    background-color: #4a8cff;
+    border-color: #4a8cff;
+}
+
+.btn-primary:hover {
+    background-color: #3a7ae8;
+    border-color: #3a7ae8;
+}
+
+/* Progress bar */
+.progress {
+    height: 0.5rem;
+    border-radius: 1rem;
+}
+
+.progress-bar {
+    background-color: #4a8cff;
+}
+
+/* Dashboard stat cards */
+.card.bg-primary, .card.bg-success, .card.bg-info {
+    border: none;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+/* Vote results table */
+.table-hover tbody tr:hover {
+    background-color: var(--bs-gray-800);
+}
+
+/* Election cards */
+.list-group-item-action:hover {
+    background-color: var(--bs-gray-800);
+}
+
+/* Webcam adjustments */
+#camera video {
+    width: 100%;
+    height: auto;
+    border-radius: 0.25rem;
+}
+
+/* Chart container */
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 400px;
+    border-radius: 0.5rem;
+    background-color: var(--bs-gray-800);
+    padding: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 300px;
+    }
+}
+
+/* Custom badge styles */
+.badge.rounded-pill {
+    padding: 0.35em 0.65em;
+}
+
+/* Form focus styles */
+.form-control:focus {
+    border-color: #4a8cff;
+    box-shadow: 0 0 0 0.25rem rgba(74, 140, 255, 0.25);
+}
+
+/* Custom avatar placeholder */
+.avatar-placeholder {
+    width: 100px;
+    height: 100px;
+}
+
+/* Alert icon alignment */
+.alert i {
+    vertical-align: middle;
+}

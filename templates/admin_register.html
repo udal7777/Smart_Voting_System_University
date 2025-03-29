@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Admin Registration</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_register') }}">
+                        <div class="mb-3">
+                            <label for="enrollment_id" class="form-label">Enrollment/Staff ID</label>
+                            <input type="text" class="form-control" id="enrollment_id" name="enrollment_id" required>
+                            <div class="form-text">Your university staff or faculty ID</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">University Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="form-text">Must be your university email address</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <div class="form-text">Must be at least 8 characters</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h5><i class="fas fa-info-circle me-2"></i>Admin Responsibilities</h5>
+                            <ul class="mb-0">
+                                <li>Create and manage elections</li>
+                                <li>Register candidates for elections</li>
+                                <li>View real-time voting results</li>
+                                <li>Monitor election participation</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the terms and conditions
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Register</button>
+                        </div>
+                    </form>
+                    
+                    <hr>
+                    <div class="text-center">
+                        <p>Already have an admin account? <a href="{{ url_for('admin_login') }}">Login here</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation for password matching
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm_password');
+        
+        function validatePassword() {
+            if (password.value != confirmPassword.value) {
+                confirmPassword.setCustomValidity("Passwords don't match");
+            } else {
+                confirmPassword.setCustomValidity('');
+            }
+        }
+        
+        password.addEventListener('change', validatePassword);
+        confirmPassword.addEventListener('keyup', validatePassword);
+    });
+</script>
+{% endblock %}

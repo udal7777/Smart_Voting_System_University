@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Manage Candidates</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Candidates for "{{ election.title }}"</h3>
+                </div>
+                <div class="card-body">
+                    {% if candidates %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Enrollment ID</th>
+                                        <th>Position</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for candidate in candidates %}
+                                        <tr>
+                                            <td>{{ candidate.name }}</td>
+                                            <td>{{ candidate.enrollment_id }}</td>
+                                            <td>{{ candidate.position }}</td>
+                                            <td>
+                                                <form method="POST" action="{{ url_for('delete_candidate', candidate_id=candidate.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this candidate?')">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        <i class="fas fa-trash me-1"></i> Remove
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-users fa-3x text-muted"></i>
+                            </div>
+                            <h5>No Candidates Added Yet</h5>
+                            <p class="text-muted">Add candidates using the form on the right</p>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i> Candidates can only be removed if no votes have been cast for them.
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-3">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+                        </a>
+                        {% if candidates %}
+                            <a href="{{ url_for('view_results', election_id=election.id) }}" class="btn btn-success">
+                                <i class="fas fa-chart-bar me-2"></i> View Results
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h4 class="mb-0">Add Candidate</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('manage_candidates', election_id=election.id) }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Candidate Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="enrollment_id" class="form-label">Enrollment ID</label>
+                            <input type="text" class="form-control" id="enrollment_id" name="enrollment_id" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="position" class="form-label">Position</label>
+                            <input type="text" class="form-control" id="position" name="position" required>
+                            <div class="form-text">e.g., President, Secretary, etc.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bio" class="form-label">Bio/Description</label>
+                            <textarea class="form-control" id="bio" name="bio" rows="3"></textarea>
+                            <div class="form-text">Brief description of the candidate (optional)</div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-2"></i> Add Candidate
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow mt-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">Election Details</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Status</span>
+                            <span class="badge bg-{{ 'success' if election.is_active else 'danger' }}">
+                                {{ 'Active' if election.is_active else 'Inactive' }}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Start Date</span>
+                            <span>{{ election.start_date.strftime('%d %b %Y, %H:%M') }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>End Date</span>
+                            <span>{{ election.end_date.strftime('%d %b %Y, %H:%M') }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Candidates</span>
+                            <span class="badge bg-primary rounded-pill">{{ candidates|length }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

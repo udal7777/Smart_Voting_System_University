@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="mb-0">Voter Dashboard</h1>
+            <p class="lead">Welcome, {{ user.enrollment_id }}</p>
+        </div>
+        <div class="col-md-4 text-md-end d-flex align-items-center justify-content-md-end">
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
+                <i class="fas fa-sign-out-alt me-2"></i>Logout
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Active Elections</h4>
+                </div>
+                <div class="card-body">
+                    {% if available_elections %}
+                        <div class="list-group">
+                            {% for election in available_elections %}
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">{{ election.title }}</h5>
+                                        <small>Ends: {{ election.end_date.strftime('%d %b %Y, %H:%M') }}</small>
+                                    </div>
+                                    {% if election.description %}
+                                        <p class="mb-1">{{ election.description }}</p>
+                                    {% endif %}
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <small>Started: {{ election.start_date.strftime('%d %b %Y, %H:%M') }}</small>
+                                        <a href="{{ url_for('vote_in_election', election_id=election.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-vote-yea me-1"></i> Vote Now
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-ballot fa-3x text-muted"></i>
+                            </div>
+                            <h5>No Active Elections Available</h5>
+                            <p class="text-muted">There are no elections available for you to vote at this time or you have already voted in all active elections.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h4 class="mb-0">Your Voting Record</h4>
+                </div>
+                <div class="card-body">
+                    {% if voted_election_ids %}
+                        <div class="list-group">
+                            {% for election in user.votes|map(attribute='election')|unique|list %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ election.title }}</h6>
+                                    </div>
+                                    <small class="text-success">
+                                        <i class="fas fa-check-circle me-1"></i> Voted
+                                    </small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-vote-yea fa-3x text-muted"></i>
+                            </div>
+                            <h5>No Voting Activity</h5>
+                            <p class="text-muted">You haven't voted in any elections yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">Your Profile</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3 text-center">
+                        <div class="avatar-placeholder bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                            <i class="fas fa-user fa-3x text-secondary"></i>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-id-card me-2"></i> Enrollment ID</span>
+                            <span class="badge bg-primary rounded-pill">{{ user.enrollment_id }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-envelope me-2"></i> Email</span>
+                            <span class="text-truncate ms-2" style="max-width: 150px;">{{ user.email }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-calendar-alt me-2"></i> Joined</span>
+                            <span>{{ user.created_at.strftime('%d %b %Y') }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

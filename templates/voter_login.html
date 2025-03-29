@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<!-- Webcam.js for camera integration -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Voter Login</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <form id="loginForm" method="POST" action="{{ url_for('voter_login') }}">
+                                <div class="mb-3">
+                                    <label for="enrollment_id" class="form-label">Enrollment ID</label>
+                                    <input type="text" class="form-control" id="enrollment_id" name="enrollment_id" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                </div>
+                                
+                                <!-- Hidden input to store face data -->
+                                <input type="hidden" id="face_data" name="face_data">
+                                
+                                <div class="d-grid">
+                                    <button type="submit" id="submitBtn" class="btn btn-primary" disabled>Login</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Face Authentication</label>
+                                <div class="face-capture-area border rounded p-2 mb-2">
+                                    <div id="camera" class="d-flex justify-content-center"></div>
+                                    <div id="captured_image" class="d-flex justify-content-center mt-2" style="display: none;"></div>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="button" id="startCamera" class="btn btn-outline-primary">Start Camera</button>
+                                    <button type="button" id="captureImage" class="btn btn-primary" disabled>Capture Image</button>
+                                    <button type="button" id="recaptureImage" class="btn btn-secondary" style="display: none;">Recapture</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <p class="mb-0"><i class="fas fa-info-circle me-2"></i>Please position your face within the frame and ensure good lighting for facial authentication.</p>
+                    </div>
+                    
+                    <hr>
+                    <div class="text-center">
+                        <p>Don't have an account? <a href="{{ url_for('voter_register') }}">Register here</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const startCameraBtn = document.getElementById('startCamera');
+        const captureBtn = document.getElementById('captureImage');
+        const recaptureBtn = document.getElementById('recaptureImage');
+        const submitBtn = document.getElementById('submitBtn');
+        const faceDataInput = document.getElementById('face_data');
+        
+        let cameraStarted = false;
+        let imageCaptured = false;
+        
+        // Initialize webcam
+        function initializeCamera() {
+            Webcam.set({
+                width: 320,
+                height: 240,
+                image_format: 'jpeg',
+                jpeg_quality: 90,
+                facingMode: 'user'
+            });
+            
+            Webcam.attach('#camera');
+            cameraStarted = true;
+            captureBtn.disabled = false;
+            startCameraBtn.disabled = true;
+        }
+        
+        // Start camera
+        startCameraBtn.addEventListener('click', function() {
+            initializeCamera();
+        });
+        
+        // Capture image
+        captureBtn.addEventListener('click', function() {
+            Webcam.snap(function(data_uri) {
+                document.getElementById('captured_image').innerHTML = 
+                    '<img src="' + data_uri + '" class="img-fluid"/>';
+                document.getElementById('captured_image').style.display = 'block';
+                document.getElementById('camera').style.display = 'none';
+                faceDataInput.value = data_uri;
+                imageCaptured = true;
+                captureBtn.style.display = 'none';
+                recaptureBtn.style.display = 'block';
+                submitBtn.disabled = false;
+            });
+        });
+        
+        // Recapture image
+        recaptureBtn.addEventListener('click', function() {
+            document.getElementById('captured_image').style.display = 'none';
+            document.getElementById('camera').style.display = 'block';
+            recaptureBtn.style.display = 'none';
+            captureBtn.style.display = 'block';
+            imageCaptured = false;
+            submitBtn.disabled = true;
+        });
+        
+        // Form submission validation
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            if (!imageCaptured) {
+                event.preventDefault();
+                alert('Please capture your face image for authentication');
+            }
+        });
+    });
+</script>
+{% endblock %}

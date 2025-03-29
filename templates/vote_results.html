@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Election Results</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Results: {{ election.title }}</h3>
+                    <div>
+                        <span class="badge bg-{{ 'success' if election.is_active else 'danger' }} me-2">
+                            {{ 'Active' if election.is_active else 'Inactive' }}
+                        </span>
+                        <span class="badge bg-info">
+                            {{ 'In Progress' if election.end_date > now else 'Completed' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-secondary mb-4">
+                        <div class="d-flex justify-content-between flex-wrap">
+                            <span><i class="fas fa-calendar-alt me-2"></i> Start: {{ election.start_date.strftime('%d %b %Y, %H:%M') }}</span>
+                            <span><i class="fas fa-calendar-alt me-2"></i> End: {{ election.end_date.strftime('%d %b %Y, %H:%M') }}</span>
+                            <span><i class="fas fa-users me-2"></i> Total Votes: <span id="totalVotes">{{ total_votes }}</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg-8">
+                            <div class="chart-container" style="position: relative; height:400px; width:100%">
+                                <canvas id="resultsChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5 class="mb-0">Vote Counts</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <ul class="list-group list-group-flush" id="resultsList">
+                                        {% for result in results %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-0">{{ result.name }}</h6>
+                                                    <small class="text-muted">{{ result.position }}</small>
+                                                </div>
+                                                <span class="badge bg-primary rounded-pill vote-count" data-candidate-id="{{ result.id }}">{{ result.votes }}</span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+                        </a>
+                        <a href="{{ url_for('manage_candidates', election_id=election.id) }}" class="btn btn-primary">
+                            <i class="fas fa-users me-2"></i> Manage Candidates
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initial data
+        const initialData = {
+            labels: [{% for result in results %}'{{ result.name }}',{% endfor %}],
+            data: [{% for result in results %}{{ result.votes }},{% endfor %}]
+        };
+        
+        // Create the chart
+        const ctx = document.getElementById('resultsChart').getContext('2d');
+        const resultsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: initialData.labels,
+                datasets: [{
+                    label: 'Votes',
+                    data: initialData.data,
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)',
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Election Results',
+                        font: {
+                            size: 18
+                        }
+                    },
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed.y;
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Fetch real-time results
+        function fetchResults() {
+            fetch('{{ url_for("api_election_results", election_id=election.id) }}')
+                .then(response => response.json())
+                .then(data => {
+                    // Update chart
+                    resultsChart.data.labels = data.chart_data.labels;
+                    resultsChart.data.datasets[0].data = data.chart_data.data;
+                    resultsChart.update();
+                    
+                    // Update vote counts in list
+                    document.getElementById('totalVotes').textContent = data.total_votes;
+                    
+                    // Update individual candidate vote counts
+                    data.results.forEach(result => {
+                        const voteCountElement = document.querySelector(`.vote-count[data-candidate-id="${result.id}"]`);
+                        if (voteCountElement) {
+                            voteCountElement.textContent = result.votes;
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching results:', error));
+        }
+        
+        // Fetch results initially and then every 5 seconds
+        fetchResults();
+        
+        {% if election.is_active and election.end_date > now %}
+        // Only poll for updates if the election is active and not ended
+        setInterval(fetchResults, 5000);
+        {% endif %}
+    });
+</script>
+{% endblock %}
