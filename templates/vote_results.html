@@ -421,12 +421,16 @@
 
 {% block scripts %}
 <script>
+    // Receive data from server as JSON instead of Jinja2 templating
+    const electionData = {{ election_data_json|safe }};
+    const chartData = {{ chart_data_json|safe }};
+    
     document.addEventListener('DOMContentLoaded', function() {
         // Initial data
         const initialData = {
-            labels: [{% for result in results %}'{{ result.name }}',{% endfor %}],
-            data: [{% for result in results %}{{ result.votes }},{% endfor %}],
-            positions: [{% for result in results %}'{{ result.position }}',{% endfor %}]
+            labels: chartData.labels,
+            data: chartData.data,
+            positions: chartData.positions
         };
         
         let chartType = 'bar';
@@ -435,7 +439,7 @@
         
         // Countdown Timer
         function updateCountdown() {
-            const endDate = new Date("{{ election.end_date.isoformat() }}");
+            const endDate = new Date(electionData.end_date);
             const now = new Date();
             const diff = endDate - now;
             
@@ -686,7 +690,7 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "election_results_{{ election.title }}.csv");
+            link.setAttribute("download", "election_results_" + electionData.title + ".csv");
             document.body.appendChild(link);
             
             // Trigger download
@@ -782,9 +786,9 @@
         // Fetch results initially
         fetchResults();
         
-        // Store election status in variables for JS-based condition
-        const isElectionActive = {{ 'true' if election.is_active else 'false' }};
-        const isElectionEnded = {{ 'true' if election.end_date <= now else 'false' }};
+        // Use election data from JSON
+        const isElectionActive = electionData.is_active;
+        const isElectionEnded = electionData.is_ended;
         
         // Only poll for updates if the election is active and not ended
         if (isElectionActive && !isElectionEnded) {

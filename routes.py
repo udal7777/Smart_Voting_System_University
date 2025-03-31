@@ -3,6 +3,7 @@ import logging
 import uuid
 import secrets
 import datetime
+import json
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash
 from app import app, db
@@ -655,11 +656,30 @@ def view_results(election_id):
     # Add current time for template
     now = datetime.datetime.utcnow()
     
+    # Prepare data for JavaScript (avoid Jinja2 templating in JavaScript)
+    election_data = {
+        'id': election.id,
+        'title': election.title,
+        'start_date': election.start_date.isoformat(),
+        'end_date': election.end_date.isoformat(),
+        'is_active': election.is_active,
+        'is_ended': election.end_date <= now
+    }
+    
+    # Prepare chart data
+    chart_data = {
+        'labels': [result['name'] for result in results],
+        'data': [result['votes'] for result in results],
+        'positions': [result['position'] for result in results]
+    }
+    
     return render_template('vote_results.html', 
                           election=election, 
                           results=results,
                           total_votes=total_votes,
-                          now=now)
+                          now=now,
+                          election_data_json=json.dumps(election_data),
+                          chart_data_json=json.dumps(chart_data))
 
 # API: Real-time Vote Counts
 @app.route('/api/election/<int:election_id>/results')
