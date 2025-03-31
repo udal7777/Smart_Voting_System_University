@@ -52,7 +52,15 @@
                                 <li><a class="dropdown-item" href="{{ url_for('voter_register') }}">Register</a></li>
                             </ul>
                         </li>
-                        <!-- Admin dropdown hidden for security - admin access redirected through safer paths -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Admin
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('admin_login') }}">Login</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_register') }}">Register</a></li>
+                            </ul>
+                        </li>
                     {% endif %}
                 </ul>
             </div>
@@ -91,8 +99,8 @@
                     <ul class="list-unstyled">
                         <li><a href="{{ url_for('index') }}" class="text-decoration-none text-light">Home</a></li>
                         {% if not session.get('user_id') %}
-                            <li><a href="{{ url_for('voter_login') }}" class="text-decoration-none text-light">Login</a></li>
-                            <li><a href="{{ url_for('voter_register') }}" class="text-decoration-none text-light">Register</a></li>
+                            <li><a href="{{ url_for('voter_login') }}" class="text-decoration-none text-light">Voter Login</a></li>
+                            <li><a href="{{ url_for('admin_login') }}" class="text-decoration-none text-light">Admin Login</a></li>
                         {% endif %}
                     </ul>
                 </div>

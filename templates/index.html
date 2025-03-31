@@ -361,10 +361,10 @@
                 <p class="hero-subtitle">A next-generation platform for university elections with cutting-edge facial recognition authentication, ensuring integrity and transparency.</p>
                 <div class="d-grid gap-3 d-md-flex hero-cta">
                     <a href="{{ url_for('voter_register') }}" class="btn hero-button primary px-4 me-md-3">
-                        <i class="fas fa-user-plus me-2"></i> Register Account
+                        <i class="fas fa-user-plus me-2"></i> Register as Voter
                     </a>
-                    <a href="{{ url_for('voter_login') }}" class="btn hero-button secondary px-4">
-                        <i class="fas fa-sign-in-alt me-2"></i> Login
+                    <a href="{{ url_for('admin_register') }}" class="btn hero-button secondary px-4">
+                        <i class="fas fa-user-shield me-2"></i> Register as Admin
                     </a>
                 </div>
             </div>
@@ -556,8 +556,8 @@
                     </li>
                 </ul>
                 <div class="info-cta">
-                    <a href="{{ url_for('voter_login') }}" class="btn hero-button primary">
-                        <i class="fas fa-sign-in-alt me-2"></i> Admin Login
+                    <a href="{{ url_for('admin_register') }}" class="btn hero-button primary">
+                        <i class="fas fa-user-shield me-2"></i> Become an Administrator
                     </a>
                 </div>
             </div>
