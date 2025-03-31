@@ -163,8 +163,9 @@
                 
                 <div class="progress mb-2">
                     {% set progress = ((now - election.start_date).total_seconds() / (election.end_date - election.start_date).total_seconds() * 100) %}
+                    {% set progress_display = progress|round|int %}
                     <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
-                         style="width: {{ progress }}%" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                         style="width: {{ progress_display }}%" aria-valuenow="{{ progress_display }}" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
                 <div class="d-flex justify-content-between small text-muted">
                     <span>Start</span>
