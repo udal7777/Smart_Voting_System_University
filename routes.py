@@ -3,11 +3,20 @@ import logging
 import uuid
 import secrets
 import datetime
-from flask import render_template, request, redirect, url_for, flash, session, jsonify
-from werkzeug.security import generate_password_hash
+import re
+from functools import wraps
+# Fix imports with explicit PYTHONPATH handling
+try:
+    from flask import render_template, request, redirect, url_for, flash, session, jsonify
+    from werkzeug.security import generate_password_hash
+except ImportError:
+    import sys
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    from flask import render_template, request, redirect, url_for, flash, session, jsonify
+    from werkzeug.security import generate_password_hash
+
 from app import app, db
 from models import User, Election, Candidate, Vote, VerificationToken
-import re
 
 # Helper function to check if user is logged in
 def is_logged_in():
@@ -21,6 +30,45 @@ def is_admin():
     user_id = session.get('user_id')
     user = User.query.get(user_id)
     return user and user.is_admin()
+
+# Decorator for admin-only routes with strict access control
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Check if the user is logged in
+        if not is_logged_in():
+            flash('Please login with administrator credentials to access this area', 'warning')
+            # Redirect specifically to admin login, not general login
+            return redirect(url_for('admin_login'))
+        
+        user_id = session.get('user_id')
+        user = User.query.get(user_id)
+        
+        # Enhanced security check for admin status
+        if not user or not user.is_admin():
+            # Clear the session to force re-authentication
+            session.clear()
+            
+            # Log the unauthorized access attempt with details
+            ip_address = request.remote_addr
+            url_accessed = request.path
+            timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+            user_agent = request.headers.get('User-Agent', 'Unknown')
+            
+            logging.warning(f"SECURITY ALERT: Unauthorized admin access attempt detected!\n"
+                           f"Time: {timestamp}\n"
+                           f"User ID: {user_id}\n"
+                           f"IP Address: {ip_address}\n"
+                           f"Attempted URL: {url_accessed}\n"
+                           f"User Agent: {user_agent}")
+            
+            flash('Unauthorized access. This security incident has been logged and reported.', 'danger')
+            # Redirect to index page after clearing session
+            return redirect(url_for('index'))
+            
+        # Admin verified - allow access
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Helper function to validate university email
 def is_valid_university_email(email):
@@ -192,11 +240,20 @@ def voter_login():
     
     return render_template('voter_login.html', now=now)
 
-# Admin Registration
-@app.route('/admin/register', methods=['GET', 'POST'])
-def admin_register():
+# Admin Registration - secured path with token to prevent discovery 
+@app.route('/admin/secure-registration/<token>', methods=['GET', 'POST'])
+def admin_register(token):
     # Get current time for template
     now = datetime.datetime.utcnow()
+    
+    # Validate the token - Only allow access with a specific hard-coded token
+    # In a production app, this would use a more sophisticated verification system
+    ADMIN_REGISTRATION_SECRET = os.environ.get('ADMIN_REGISTRATION_SECRET', 'university_admin_secret_2025')
+    
+    if token != ADMIN_REGISTRATION_SECRET:
+        logging.warning(f"Invalid admin registration token attempt: {token}")
+        flash('Invalid or expired registration token. This incident has been logged.', 'danger')
+        return redirect(url_for('index'))
     
     if request.method == 'POST':
         enrollment_id = request.form.get('enrollment_id')
@@ -419,17 +476,10 @@ def vote_in_election(election_id):
 
 # Admin Dashboard
 @app.route('/admin/dashboard')
+@admin_required
 def admin_dashboard():
-    if not is_logged_in():
-        flash('Please login to access this page', 'warning')
-        return redirect(url_for('admin_login'))
-    
     user_id = session.get('user_id')
     user = User.query.get(user_id)
-    
-    if not user.is_admin():
-        flash('You do not have permission to access this page', 'danger')
-        return redirect(url_for('voter_dashboard'))
     
     # Get current time for template
     now = datetime.datetime.utcnow()
@@ -456,11 +506,8 @@ def admin_dashboard():
 
 # Create Election
 @app.route('/admin/create-election', methods=['GET', 'POST'])
+@admin_required
 def create_election():
-    if not is_logged_in() or not is_admin():
-        flash('You do not have permission to access this page', 'danger')
-        return redirect(url_for('admin_login'))
-    
     user_id = session.get('user_id')
     
     # Get current time for template
@@ -518,11 +565,8 @@ def create_election():
 
 # Manage Candidates
 @app.route('/admin/election/<int:election_id>/candidates', methods=['GET', 'POST'])
+@admin_required
 def manage_candidates(election_id):
-    if not is_logged_in() or not is_admin():
-        flash('You do not have permission to access this page', 'danger')
-        return redirect(url_for('admin_login'))
-    
     user_id = session.get('user_id')
     
     # Get election
@@ -583,11 +627,8 @@ def manage_candidates(election_id):
 
 # Delete Candidate
 @app.route('/admin/delete-candidate/<int:candidate_id>', methods=['POST'])
+@admin_required
 def delete_candidate(candidate_id):
-    if not is_logged_in() or not is_admin():
-        flash('You do not have permission to access this page', 'danger')
-        return redirect(url_for('admin_login'))
-    
     user_id = session.get('user_id')
     
     # Get candidate
@@ -621,11 +662,8 @@ def delete_candidate(candidate_id):
 
 # View Election Results
 @app.route('/admin/election/<int:election_id>/results')
+@admin_required
 def view_results(election_id):
-    if not is_logged_in() or not is_admin():
-        flash('You do not have permission to access this page', 'danger')
-        return redirect(url_for('admin_login'))
-    
     user_id = session.get('user_id')
     
     # Get election
@@ -663,10 +701,8 @@ def view_results(election_id):
 
 # API: Real-time Vote Counts
 @app.route('/api/election/<int:election_id>/results')
+@admin_required
 def api_election_results(election_id):
-    if not is_logged_in() or not is_admin():
-        return jsonify({'error': 'Unauthorized'}), 401
-    
     user_id = session.get('user_id')
     
     # Get election
@@ -720,11 +756,8 @@ def api_election_results(election_id):
 
 # Toggle Election Status
 @app.route('/admin/election/<int:election_id>/toggle', methods=['POST'])
+@admin_required
 def toggle_election(election_id):
-    if not is_logged_in() or not is_admin():
-        flash('You do not have permission to access this page', 'danger')
-        return redirect(url_for('admin_login'))
-    
     user_id = session.get('user_id')
     
     # Get election
