@@ -3,6 +3,190 @@
 {% block extra_head %}
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<style>
+    /* Custom styles for election results */
+    .results-header {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, #2d6da3 100%);
+        padding: 1.5rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+    
+    .result-title {
+        font-size: 2rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stats-container {
+        background-color: var(--bs-gray-800);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-item {
+        text-align: center;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background-color: var(--bs-gray-700);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .stats-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stats-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: var(--bs-primary);
+    }
+    
+    .stats-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stats-label {
+        font-size: 0.9rem;
+        color: var(--bs-gray-400);
+    }
+    
+    .chart-container {
+        background-color: var(--bs-gray-800);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        height: 450px;
+    }
+    
+    .result-card {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .result-card-header {
+        padding: 1rem;
+        background: linear-gradient(to right, var(--bs-secondary), var(--bs-dark));
+    }
+    
+    .result-list-item {
+        padding: 1rem;
+        border-bottom: 1px solid var(--bs-gray-700);
+        transition: all 0.3s ease;
+    }
+    
+    .result-list-item:hover {
+        background-color: var(--bs-gray-800);
+    }
+    
+    .result-list-item:last-child {
+        border-bottom: none;
+    }
+    
+    .vote-badge {
+        font-size: 1rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 2rem;
+    }
+    
+    .vote-count {
+        transition: all 0.3s ease;
+    }
+    
+    .vote-count.updated {
+        animation: pulse 1s;
+    }
+    
+    .tab-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .custom-tab {
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        background-color: var(--bs-gray-800);
+        color: var(--bs-gray-400);
+        margin-right: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .custom-tab.active, .custom-tab:hover {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+    
+    .position-filter {
+        max-width: 200px;
+    }
+    
+    .countdown-timer {
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        background-color: rgba(0,0,0,0.3);
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+    }
+    
+    .results-card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-btn {
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .real-time-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        animation: pulse 2s infinite;
+    }
+    
+    .trend-indicator {
+        font-size: 0.9rem;
+        margin-left: 0.5rem;
+    }
+    
+    .trend-up {
+        color: var(--bs-success);
+    }
+    
+    .trend-down {
+        color: var(--bs-danger);
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -14,65 +198,220 @@
         </ol>
     </nav>
 
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card shadow mb-4">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0">Results: {{ election.title }}</h3>
-                    <div>
+    <div class="card shadow results-card">
+        <div class="results-header text-white">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h1 class="result-title mb-0">{{ election.title }}</h1>
+                    <p class="mb-0 mt-2">
                         <span class="badge bg-{{ 'success' if election.is_active else 'danger' }} me-2">
                             {{ 'Active' if election.is_active else 'Inactive' }}
                         </span>
                         <span class="badge bg-info">
                             {{ 'In Progress' if election.end_date > now else 'Completed' }}
                         </span>
+                    </p>
+                </div>
+                <div class="countdown-timer" id="countdown">
+                    <i class="fas fa-hourglass-half me-2"></i>
+                    <span id="time-remaining">Calculating...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body p-4">
+            <!-- Stats Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="stats-item">
+                        <div class="stats-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stats-value" id="totalVoteDisplay">{{ total_votes }}</div>
+                        <div class="stats-label">Total Votes Cast</div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-secondary mb-4">
-                        <div class="d-flex justify-content-between flex-wrap">
-                            <span><i class="fas fa-calendar-alt me-2"></i> Start: {{ election.start_date.strftime('%d %b %Y, %H:%M') }}</span>
-                            <span><i class="fas fa-calendar-alt me-2"></i> End: {{ election.end_date.strftime('%d %b %Y, %H:%M') }}</span>
-                            <span><i class="fas fa-users me-2"></i> Total Votes: <span id="totalVotes">{{ total_votes }}</span></span>
+                <div class="col-md-4">
+                    <div class="stats-item">
+                        <div class="stats-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="stats-value">{{ results|length }}</div>
+                        <div class="stats-label">Candidates</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-item">
+                        <div class="stats-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stats-value">
+                            {% if election.end_date > now %}
+                                <span id="daysRemaining">
+                                    {{ ((election.end_date - now).total_seconds() / 86400)|int }}
+                                </span>
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                        <div class="stats-label">
+                            {% if election.end_date > now %}
+                                Days Remaining
+                            {% else %}
+                                Days Concluded
+                            {% endif %}
                         </div>
                     </div>
-                    
-                    <div class="row mb-4">
-                        <div class="col-lg-8">
-                            <div class="chart-container" style="position: relative; height:400px; width:100%">
-                                <canvas id="resultsChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Date Information -->
+            <div class="alert alert-secondary mb-4">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-calendar-check fa-2x me-3 text-success"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Started On</div>
+                                <div class="fw-bold">{{ election.start_date.strftime('%d %b %Y, %H:%M') }}</div>
                             </div>
                         </div>
-                        <div class="col-lg-4">
-                            <div class="card">
-                                <div class="card-header bg-secondary text-white">
-                                    <h5 class="mb-0">Vote Counts</h5>
-                                </div>
-                                <div class="card-body p-0">
-                                    <ul class="list-group list-group-flush" id="resultsList">
-                                        {% for result in results %}
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <h6 class="mb-0">{{ result.name }}</h6>
-                                                    <small class="text-muted">{{ result.position }}</small>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-calendar-times fa-2x me-3 text-danger"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Ends On</div>
+                                <div class="fw-bold">{{ election.end_date.strftime('%d %b %Y, %H:%M') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-clock fa-2x me-3 text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Last Updated</div>
+                                <div class="fw-bold" id="lastUpdated">{{ now.strftime('%d %b %Y, %H:%M:%S') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chart & Results Row -->
+            <div class="tab-container d-flex">
+                <button class="custom-tab active" id="barChartTab">Bar Chart</button>
+                <button class="custom-tab" id="pieChartTab">Pie Chart</button>
+                {% if results|length > 0 %}
+                <div class="ms-auto">
+                    <select class="form-select position-filter" id="positionFilter">
+                        <option value="all">All Positions</option>
+                        {% set positions = [] %}
+                        {% for result in results %}
+                            {% if result.position not in positions %}
+                                {% set positions = positions + [result.position] %}
+                                <option value="{{ result.position }}">{{ result.position }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="chart-container position-relative">
+                        {% if election.is_active and election.end_date > now %}
+                            <span class="badge bg-danger real-time-badge">
+                                <i class="fas fa-circle me-1"></i> Live Results
+                            </span>
+                        {% endif %}
+                        <canvas id="resultsChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="result-card h-100">
+                        <div class="result-card-header text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Vote Counts</h5>
+                                <span class="badge bg-primary rounded-pill">{{ results|length }}</span>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush" id="resultsList">
+                                {% if results|length > 0 %}
+                                    {% for result in results %}
+                                        <div class="result-list-item d-flex justify-content-between align-items-center" 
+                                             data-position="{{ result.position }}">
+                                            <div>
+                                                <h6 class="mb-1">{{ result.name }}</h6>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-secondary me-2">{{ result.position }}</span>
+                                                    <small class="text-muted">ID: {{ result.id }}</small>
                                                 </div>
-                                                <span class="badge bg-primary rounded-pill vote-count" data-candidate-id="{{ result.id }}">{{ result.votes }}</span>
-                                            </li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
+                                            </div>
+                                            <span class="vote-badge bg-primary vote-count" data-candidate-id="{{ result.id }}">
+                                                {{ result.votes }}
+                                            </span>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="p-4 text-center">
+                                        <i class="fas fa-info-circle fa-2x mb-2 text-muted"></i>
+                                        <p>No candidates or votes recorded yet.</p>
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
-                        </a>
-                        <a href="{{ url_for('manage_candidates', election_id=election.id) }}" class="btn btn-primary">
-                            <i class="fas fa-users me-2"></i> Manage Candidates
-                        </a>
+                </div>
+            </div>
+            
+            <!-- Winner Prediction Section (only show if election has votes and is active) -->
+            {% if total_votes > 0 and election.end_date > now %}
+                <div class="alert alert-info mb-4">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-chart-line fa-2x me-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="alert-heading">Current Trends</h5>
+                            <p class="mb-0">Based on current votes, the leading candidate is 
+                                <strong id="leadingCandidate">
+                                    {% set leading = {'name': '', 'votes': 0} %}
+                                    {% for result in results %}
+                                        {% if result.votes > leading.votes %}
+                                            {% set leading = {'name': result.name, 'votes': result.votes} %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {{ leading.name if leading.name else 'None' }}
+                                </strong>
+                                with <strong id="leadingVotes">{{ leading.votes if leading.votes else 0 }}</strong> votes.
+                                The election is still ongoing and results may change.
+                            </p>
+                        </div>
                     </div>
+                </div>
+            {% endif %}
+                
+            <!-- Actions -->
+            <div class="d-flex justify-content-between mt-2">
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary action-btn">
+                    <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+                </a>
+                <div>
+                    <a href="{{ url_for('manage_candidates', election_id=election.id) }}" class="btn btn-primary action-btn me-2">
+                        <i class="fas fa-users me-2"></i> Manage Candidates
+                    </a>
+                    <button id="exportBtn" class="btn btn-success action-btn">
+                        <i class="fas fa-file-export me-2"></i> Export Results
+                    </button>
                 </div>
             </div>
         </div>
@@ -86,74 +425,275 @@
         // Initial data
         const initialData = {
             labels: [{% for result in results %}'{{ result.name }}',{% endfor %}],
-            data: [{% for result in results %}{{ result.votes }},{% endfor %}]
+            data: [{% for result in results %}{{ result.votes }},{% endfor %}],
+            positions: [{% for result in results %}'{{ result.position }}',{% endfor %}]
         };
         
-        // Create the chart
-        const ctx = document.getElementById('resultsChart').getContext('2d');
-        const resultsChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: initialData.labels,
-                datasets: [{
-                    label: 'Votes',
-                    data: initialData.data,
-                    backgroundColor: [
-                        'rgba(75, 192, 192, 0.7)',
-                        'rgba(153, 102, 255, 0.7)',
-                        'rgba(255, 159, 64, 0.7)',
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 206, 86, 0.7)'
-                    ],
-                    borderColor: [
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)',
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Election Results',
-                        font: {
-                            size: 18
-                        }
-                    },
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += context.parsed.y;
-                                return label;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1,
-                            precision: 0
-                        }
-                    }
+        let chartType = 'bar';
+        let chartInstance = null;
+        let filteredPosition = 'all';
+        
+        // Countdown Timer
+        function updateCountdown() {
+            const endDate = new Date("{{ election.end_date.isoformat() }}");
+            const now = new Date();
+            const diff = endDate - now;
+            
+            if (diff <= 0) {
+                document.getElementById('time-remaining').innerHTML = 'Election has ended';
+                return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            let timeString = '';
+            if (days > 0) {
+                timeString += `${days}d `;
+            }
+            timeString += `${hours}h ${minutes}m ${seconds}s remaining`;
+            
+            document.getElementById('time-remaining').innerHTML = timeString;
+            
+            // Update days remaining stat
+            if (document.getElementById('daysRemaining')) {
+                document.getElementById('daysRemaining').textContent = days;
+            }
+        }
+        
+        // Update countdown every second
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+        
+        // Filter results by position
+        function filterResultsByPosition(position) {
+            const resultItems = document.querySelectorAll('.result-list-item');
+            
+            resultItems.forEach(item => {
+                if (position === 'all' || item.dataset.position === position) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Also update chart data
+            updateChartWithFilter(position);
+        }
+        
+        function updateChartWithFilter(position) {
+            // Get filtered data
+            let filteredLabels = [];
+            let filteredData = [];
+            let filteredBgColors = [];
+            let filteredBorderColors = [];
+            
+            const colors = [
+                { bg: 'rgba(75, 192, 192, 0.7)', border: 'rgba(75, 192, 192, 1)' },
+                { bg: 'rgba(153, 102, 255, 0.7)', border: 'rgba(153, 102, 255, 1)' },
+                { bg: 'rgba(255, 159, 64, 0.7)', border: 'rgba(255, 159, 64, 1)' },
+                { bg: 'rgba(255, 99, 132, 0.7)', border: 'rgba(255, 99, 132, 1)' },
+                { bg: 'rgba(54, 162, 235, 0.7)', border: 'rgba(54, 162, 235, 1)' },
+                { bg: 'rgba(255, 206, 86, 0.7)', border: 'rgba(255, 206, 86, 1)' }
+            ];
+            
+            for (let i = 0; i < initialData.labels.length; i++) {
+                if (position === 'all' || initialData.positions[i] === position) {
+                    filteredLabels.push(initialData.labels[i]);
+                    filteredData.push(initialData.data[i]);
+                    
+                    const colorIndex = i % colors.length;
+                    filteredBgColors.push(colors[colorIndex].bg);
+                    filteredBorderColors.push(colors[colorIndex].border);
                 }
             }
+            
+            // Update chart
+            chartInstance.data.labels = filteredLabels;
+            chartInstance.data.datasets[0].data = filteredData;
+            chartInstance.data.datasets[0].backgroundColor = filteredBgColors;
+            chartInstance.data.datasets[0].borderColor = filteredBorderColors;
+            chartInstance.update();
+        }
+        
+        // Create chart function
+        function createChart(type) {
+            // Destroy existing chart if there is one
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            
+            // Prepare colors array
+            const colors = [
+                { bg: 'rgba(75, 192, 192, 0.7)', border: 'rgba(75, 192, 192, 1)' },
+                { bg: 'rgba(153, 102, 255, 0.7)', border: 'rgba(153, 102, 255, 1)' },
+                { bg: 'rgba(255, 159, 64, 0.7)', border: 'rgba(255, 159, 64, 1)' },
+                { bg: 'rgba(255, 99, 132, 0.7)', border: 'rgba(255, 99, 132, 1)' },
+                { bg: 'rgba(54, 162, 235, 0.7)', border: 'rgba(54, 162, 235, 1)' },
+                { bg: 'rgba(255, 206, 86, 0.7)', border: 'rgba(255, 206, 86, 1)' }
+            ];
+            
+            let bgColors = [];
+            let borderColors = [];
+            
+            for (let i = 0; i < initialData.labels.length; i++) {
+                const colorIndex = i % colors.length;
+                bgColors.push(colors[colorIndex].bg);
+                borderColors.push(colors[colorIndex].border);
+            }
+            
+            const ctx = document.getElementById('resultsChart').getContext('2d');
+            
+            // Create new chart
+            chartInstance = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: initialData.labels,
+                    datasets: [{
+                        label: 'Votes',
+                        data: initialData.data,
+                        backgroundColor: bgColors,
+                        borderColor: borderColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Election Results',
+                            font: {
+                                size: 18
+                            },
+                            color: '#fff'
+                        },
+                        legend: {
+                            display: type === 'pie',
+                            position: 'bottom',
+                            labels: {
+                                color: '#fff',
+                                padding: 10,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        if (type === 'pie') {
+                                            label += ': ';
+                                        } else {
+                                            label = 'Votes: ';
+                                        }
+                                    }
+                                    
+                                    const votes = context.parsed.y || context.parsed || 0;
+                                    label += votes;
+                                    
+                                    if (type === 'pie' && initialData.data.reduce((a, b) => a + b, 0) > 0) {
+                                        const percentage = ((votes / initialData.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+                                        label += ` (${percentage}%)`;
+                                    }
+                                    
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: type === 'bar' ? {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0,
+                                color: '#adb5bd'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#adb5bd'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            }
+                        }
+                    } : {}
+                }
+            });
+            
+            // Apply current position filter
+            if (filteredPosition !== 'all') {
+                updateChartWithFilter(filteredPosition);
+            }
+        }
+        
+        // Create initial chart
+        createChart('bar');
+        
+        // Add event listeners to tabs
+        document.getElementById('barChartTab').addEventListener('click', function() {
+            document.getElementById('barChartTab').classList.add('active');
+            document.getElementById('pieChartTab').classList.remove('active');
+            chartType = 'bar';
+            createChart('bar');
+        });
+        
+        document.getElementById('pieChartTab').addEventListener('click', function() {
+            document.getElementById('pieChartTab').classList.add('active');
+            document.getElementById('barChartTab').classList.remove('active');
+            chartType = 'pie';
+            createChart('pie');
+        });
+        
+        // Add event listener to position filter
+        const positionFilter = document.getElementById('positionFilter');
+        if (positionFilter) {
+            positionFilter.addEventListener('change', function() {
+                filteredPosition = this.value;
+                filterResultsByPosition(filteredPosition);
+            });
+        }
+        
+        // Export results functionality
+        document.getElementById('exportBtn').addEventListener('click', function() {
+            // Prepare CSV data
+            let csvContent = "data:text/csv;charset=utf-8,";
+            
+            // Add headers
+            csvContent += "Candidate Name,Position,Votes\n";
+            
+            // Add each result
+            for (let i = 0; i < initialData.labels.length; i++) {
+                const row = [
+                    initialData.labels[i],
+                    initialData.positions[i],
+                    initialData.data[i]
+                ].join(",");
+                csvContent += row + "\n";
+            }
+            
+            // Create download link
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "election_results_{{ election.title }}.csv");
+            document.body.appendChild(link);
+            
+            // Trigger download
+            link.click();
+            
+            // Clean up
+            document.body.removeChild(link);
         });
         
         // Fetch real-time results
@@ -161,18 +701,77 @@
             fetch('{{ url_for("api_election_results", election_id=election.id) }}')
                 .then(response => response.json())
                 .then(data => {
+                    // Store old data for comparison
+                    const oldData = [...initialData.data];
+                    
+                    // Update initialData
+                    initialData.labels = data.chart_data.labels;
+                    initialData.data = data.chart_data.data;
+                    
+                    // Construct positions array from results
+                    initialData.positions = [];
+                    data.results.forEach(result => {
+                        initialData.positions.push(result.position);
+                    });
+                    
                     // Update chart
-                    resultsChart.data.labels = data.chart_data.labels;
-                    resultsChart.data.datasets[0].data = data.chart_data.data;
-                    resultsChart.update();
+                    updateChartWithFilter(filteredPosition);
                     
                     // Update vote counts in list
-                    document.getElementById('totalVotes').textContent = data.total_votes;
+                    document.getElementById('totalVoteDisplay').textContent = data.total_votes;
+                    document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
                     
-                    // Update individual candidate vote counts
+                    // Update leading candidate
+                    let leading = { name: 'None', votes: 0 };
                     data.results.forEach(result => {
+                        if (result.votes > leading.votes) {
+                            leading = { name: result.name, votes: result.votes };
+                        }
+                    });
+                    
+                    if (document.getElementById('leadingCandidate')) {
+                        document.getElementById('leadingCandidate').textContent = leading.name;
+                        document.getElementById('leadingVotes').textContent = leading.votes;
+                    }
+                    
+                    // Update individual candidate vote counts with animation
+                    data.results.forEach((result, index) => {
                         const voteCountElement = document.querySelector(`.vote-count[data-candidate-id="${result.id}"]`);
                         if (voteCountElement) {
+                            // Check if vote count has changed
+                            if (oldData[index] !== undefined && oldData[index] !== result.votes) {
+                                // Add animation class
+                                voteCountElement.classList.add('updated');
+                                
+                                // Add trend indicator
+                                const trendIndicator = document.createElement('span');
+                                trendIndicator.classList.add('trend-indicator');
+                                
+                                if (result.votes > oldData[index]) {
+                                    trendIndicator.classList.add('trend-up');
+                                    trendIndicator.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                                } else {
+                                    trendIndicator.classList.add('trend-down');
+                                    trendIndicator.innerHTML = '<i class="fas fa-arrow-down"></i>';
+                                }
+                                
+                                // Remove existing trend indicators
+                                const existingIndicators = voteCountElement.querySelectorAll('.trend-indicator');
+                                existingIndicators.forEach(ind => ind.remove());
+                                
+                                voteCountElement.appendChild(trendIndicator);
+                                
+                                // Remove animation class after animation completes
+                                setTimeout(() => {
+                                    voteCountElement.classList.remove('updated');
+                                    
+                                    // Remove trend indicator after a delay
+                                    setTimeout(() => {
+                                        trendIndicator.remove();
+                                    }, 2000);
+                                }, 1000);
+                            }
+                            
                             voteCountElement.textContent = result.votes;
                         }
                     });

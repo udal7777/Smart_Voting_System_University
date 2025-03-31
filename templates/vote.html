@@ -1,5 +1,116 @@
 {% extends 'base.html' %}
 
+{% block extra_head %}
+<style>
+    /* Custom styles for this template */
+    .election-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+    }
+    
+    .candidate-card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        overflow: hidden;
+    }
+    
+    .candidate-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .candidate-card .card-inner {
+        padding: 1.5rem;
+    }
+    
+    .candidate-card .form-check-input {
+        width: 1.3rem;
+        height: 1.3rem;
+    }
+    
+    .candidate-selected {
+        border-color: var(--bs-primary);
+        background-color: rgba(74, 140, 255, 0.05);
+    }
+    
+    .countdown-timer {
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .progress {
+        height: 0.8rem;
+        border-radius: 0.8rem;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+        background-size: 1rem 1rem;
+        animation: progress-bar-stripes 1s linear infinite;
+    }
+    
+    .candidate-avatar {
+        width: 75px;
+        height: 75px;
+        background-color: var(--bs-gray-700);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
+    
+    .vote-btn {
+        padding: 0.6rem 2rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+    
+    .vote-btn:hover {
+        transform: scale(1.05);
+    }
+    
+    .election-header {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, #2d6da3 100%);
+        padding: 1.5rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+    
+    .election-title {
+        font-size: 2rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        margin-bottom: 0;
+    }
+    
+    .vote-confirmation {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .candidate-position-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 5;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <nav aria-label="breadcrumb">
@@ -9,56 +120,114 @@
         </ol>
     </nav>
 
-    <div class="card shadow">
-        <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">{{ election.title }}</h3>
+    <div class="card shadow border-0">
+        <div class="election-header text-white">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <h1 class="election-title">{{ election.title }}</h1>
+                <div class="countdown-timer" id="countdown">
+                    <i class="fas fa-hourglass-half me-2"></i>
+                    <span id="time-remaining">Calculating...</span>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             {% if election.description %}
                 <div class="alert alert-secondary mb-4">
-                    {{ election.description }}
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-info-circle fa-2x me-3 text-primary"></i>
+                        </div>
+                        <div>
+                            <h5 class="alert-heading">Election Information</h5>
+                            <p class="mb-0">{{ election.description }}</p>
+                        </div>
+                    </div>
                 </div>
             {% endif %}
             
             <div class="mb-4">
-                <div class="d-flex justify-content-between small mb-2">
-                    <span>
-                        <i class="fas fa-calendar-alt me-1"></i> Start: {{ election.start_date.strftime('%d %b %Y, %H:%M') }}
-                    </span>
-                    <span>
-                        <i class="fas fa-calendar-alt me-1"></i> End: {{ election.end_date.strftime('%d %b %Y, %H:%M') }}
-                    </span>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <span class="badge bg-success rounded-pill">
+                            <i class="fas fa-calendar-check me-1"></i> 
+                            Started: {{ election.start_date.strftime('%d %b %Y, %H:%M') }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="badge bg-danger rounded-pill">
+                            <i class="fas fa-calendar-times me-1"></i> 
+                            Ends: {{ election.end_date.strftime('%d %b %Y, %H:%M') }}
+                        </span>
+                    </div>
                 </div>
                 
-                <div class="progress" style="height: 10px;">
+                <div class="progress mb-2">
                     {% set progress = ((now - election.start_date).total_seconds() / (election.end_date - election.start_date).total_seconds() * 100) %}
-                    <div class="progress-bar" role="progressbar" style="width: {{ progress }}%"></div>
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                         style="width: {{ progress }}%" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                    <span>Start</span>
+                    <span>End</span>
                 </div>
             </div>
 
-            <form method="POST" action="{{ url_for('vote_in_election', election_id=election.id) }}">
-                <h4>Candidates</h4>
+            <form method="POST" action="{{ url_for('vote_in_election', election_id=election.id) }}" id="voteForm">
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="mb-0"><i class="fas fa-users me-2 text-primary"></i>Candidates</h3>
+                        <span class="badge bg-primary rounded-pill">{{ candidates|length }} candidates</span>
+                    </div>
                 
                 {% if candidates %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i> Select ONE candidate to vote for
+                    <div class="alert alert-info border-start border-5">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-lightbulb fa-2x me-3 text-warning"></i>
+                            </div>
+                            <div>
+                                <h5 class="alert-heading">How to Vote</h5>
+                                <p class="mb-0">Select ONE candidate below and click "Submit Vote" to cast your vote. Your selection can't be changed after submission.</p>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                    <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
                         {% for candidate in candidates %}
                             <div class="col">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="candidate_id" 
-                                                  id="candidate-{{ candidate.id }}" value="{{ candidate.id }}" required>
-                                            <label class="form-check-label" for="candidate-{{ candidate.id }}">
-                                                <h5 class="mb-1">{{ candidate.name }}</h5>
-                                                <p class="text-muted mb-2">Position: {{ candidate.position }}</p>
-                                                {% if candidate.bio %}
-                                                    <p class="mb-0 small">{{ candidate.bio }}</p>
-                                                {% endif %}
-                                            </label>
+                                <div class="card candidate-card h-100" id="card-{{ candidate.id }}">
+                                    {% if candidate.position %}
+                                        <div class="candidate-position-badge">
+                                            <span class="badge bg-secondary">{{ candidate.position }}</span>
+                                        </div>
+                                    {% endif %}
+                                    <div class="card-body p-0">
+                                        <div class="card-inner">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="candidate-avatar">
+                                                    <i class="fas fa-user fa-2x text-light"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 class="mb-1">{{ candidate.name }}</h4>
+                                                    <p class="text-muted mb-0">ID: {{ candidate.enrollment_id }}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            {% if candidate.bio %}
+                                                <div class="mb-3">
+                                                    <h6 class="text-muted mb-2">About Candidate</h6>
+                                                    <p class="mb-0">{{ candidate.bio }}</p>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            <div class="form-check mt-3">
+                                                <input class="form-check-input candidate-radio" type="radio" name="candidate_id" 
+                                                      id="candidate-{{ candidate.id }}" value="{{ candidate.id }}" required
+                                                      data-card-id="card-{{ candidate.id }}">
+                                                <label class="form-check-label" for="candidate-{{ candidate.id }}">
+                                                    <strong>Select this candidate</strong>
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -66,28 +235,116 @@
                         {% endfor %}
                     </div>
                     
-                    <div class="alert alert-warning mt-4">
-                        <i class="fas fa-exclamation-triangle me-2"></i> Your vote is final and cannot be changed once submitted.
+                    <div class="alert alert-warning border-start border-5">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+                            </div>
+                            <div>
+                                <h5 class="alert-heading">Important Notice</h5>
+                                <p class="mb-0">Your vote is final and cannot be changed once submitted. Please review your selection carefully before confirming.</p>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a href="{{ url_for('voter_dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">
+                        <a href="{{ url_for('voter_dashboard') }}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg vote-btn" id="vote-button">
                             <i class="fas fa-vote-yea me-2"></i> Submit Vote
                         </button>
                     </div>
                 {% else %}
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i> No candidates have been registered for this election.
+                    <div class="alert alert-warning border-start border-5">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+                            </div>
+                            <div>
+                                <h5 class="alert-heading">No Candidates Available</h5>
+                                <p class="mb-0">No candidates have been registered for this election yet. Please check back later.</p>
+                            </div>
+                        </div>
                     </div>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-                        <a href="{{ url_for('voter_dashboard') }}" class="btn btn-primary">
+                        <a href="{{ url_for('voter_dashboard') }}" class="btn btn-primary btn-lg">
                             <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
                         </a>
                     </div>
                 {% endif %}
+                </div>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Countdown Timer
+    function updateCountdown() {
+        const endDate = new Date("{{ election.end_date.isoformat() }}");
+        const now = new Date();
+        const diff = endDate - now;
+        
+        if (diff <= 0) {
+            document.getElementById('time-remaining').innerHTML = 'Election has ended';
+            return;
+        }
+        
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        let timeString = '';
+        if (days > 0) {
+            timeString += `${days}d `;
+        }
+        timeString += `${hours}h ${minutes}m ${seconds}s remaining`;
+        
+        document.getElementById('time-remaining').innerHTML = timeString;
+    }
+    
+    // Update countdown every second
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+    
+    // Candidate card selection highlight
+    document.addEventListener('DOMContentLoaded', function() {
+        const radioButtons = document.querySelectorAll('.candidate-radio');
+        
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Remove selected class from all cards
+                document.querySelectorAll('.candidate-card').forEach(card => {
+                    card.classList.remove('candidate-selected');
+                });
+                
+                // Add selected class to the selected card
+                if (this.checked) {
+                    const cardId = this.getAttribute('data-card-id');
+                    document.getElementById(cardId).classList.add('candidate-selected');
+                }
+            });
+        });
+        
+        // Form validation and submission feedback
+        const voteForm = document.getElementById('voteForm');
+        const voteButton = document.getElementById('vote-button');
+        
+        if (voteForm) {
+            voteForm.addEventListener('submit', function(e) {
+                if (!document.querySelector('input[name="candidate_id"]:checked')) {
+                    e.preventDefault();
+                    alert('Please select a candidate before submitting your vote.');
+                } else {
+                    voteButton.disabled = true;
+                    voteButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}
