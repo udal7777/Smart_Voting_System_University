@@ -779,13 +779,18 @@
                 .catch(error => console.error('Error fetching results:', error));
         }
         
-        // Fetch results initially and then every 5 seconds
+        // Fetch results initially
         fetchResults();
         
-        {% if election.is_active and election.end_date > now %}
+        // Store election status in variables for JS-based condition
+        const isElectionActive = {{ 'true' if election.is_active else 'false' }};
+        const isElectionEnded = {{ 'true' if election.end_date <= now else 'false' }};
+        
         // Only poll for updates if the election is active and not ended
-        setInterval(fetchResults, 5000);
-        {% endif %}
+        if (isElectionActive && !isElectionEnded) {
+            console.log('Setting up polling for live election results');
+            setInterval(fetchResults, 5000);
+        }
     });
 </script>
 {% endblock %}
