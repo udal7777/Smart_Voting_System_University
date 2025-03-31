@@ -216,6 +216,13 @@
                     <i class="fas fa-hourglass-half me-2"></i>
                     <span id="time-remaining">Calculating...</span>
                 </div>
+                <!-- Hidden div with data attributes for JavaScript -->
+                <div id="election-status" class="d-none" 
+                     data-active="{{ 'true' if election.is_active else 'false' }}"
+                     data-ended="{{ 'true' if election.end_date <= now else 'false' }}"
+                     data-end-date="{{ election.end_date.isoformat() }}"
+                     data-api-url="{{ url_for('api_election_results', election_id=election.id) }}"
+                     data-election-title="{{ election.title }}"></div>
             </div>
         </div>
         
@@ -435,7 +442,8 @@
         
         // Countdown Timer
         function updateCountdown() {
-            const endDate = new Date("{{ election.end_date.isoformat() }}");
+            // Get end date from data attribute
+            const endDate = new Date(document.getElementById('election-status').dataset.endDate);
             const now = new Date();
             const diff = endDate - now;
             
@@ -686,7 +694,9 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "election_results_{{ election.title }}.csv");
+            // Get election title from data attribute
+            const electionTitle = document.getElementById('election-status').dataset.electionTitle;
+            link.setAttribute("download", `election_results_${electionTitle}.csv`);
             document.body.appendChild(link);
             
             // Trigger download
@@ -698,7 +708,9 @@
         
         // Fetch real-time results
         function fetchResults() {
-            fetch('{{ url_for("api_election_results", election_id=election.id) }}')
+            // Get API URL from data attribute
+            const apiUrl = document.getElementById('election-status').dataset.apiUrl;
+            fetch(apiUrl)
                 .then(response => response.json())
                 .then(data => {
                     // Store old data for comparison
@@ -782,9 +794,9 @@
         // Fetch results initially
         fetchResults();
         
-        // Store election status in variables for JS-based condition
-        const isElectionActive = {{ 'true' if election.is_active else 'false' }};
-        const isElectionEnded = {{ 'true' if election.end_date <= now else 'false' }};
+        // Get election status from data attributes
+        const isElectionActive = document.getElementById('election-status').dataset.active === 'true';
+        const isElectionEnded = document.getElementById('election-status').dataset.ended === 'true';
         
         // Only poll for updates if the election is active and not ended
         if (isElectionActive && !isElectionEnded) {
