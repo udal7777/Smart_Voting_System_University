@@ -81,15 +81,39 @@ def voter_register():
             flash('User with this enrollment ID or email already exists', 'danger')
             return render_template('voter_register.html', now=now)
         
-        # Process face data
-        from face_utils import get_face_encoding
-        face_encoding, error = get_face_encoding(face_data)
+        # Process face data with enhanced multi-frame detection
+        from face_utils import get_face_encoding, process_multiple_frames
+        import logging
+        import json
+        
+        # Log that we're attempting face registration
+        logging.info(f"Attempting face registration for voter {enrollment_id}")
+        
+        # Check if we have multiple frames
+        try:
+            # Try to parse as JSON array of frames
+            face_frames = json.loads(face_data)
+            
+            if isinstance(face_frames, list) and len(face_frames) > 0:
+                # Process multiple frames for more reliable face recognition
+                logging.info(f"Processing {len(face_frames)} face frames for voter {enrollment_id}")
+                face_encoding, error = process_multiple_frames(face_frames)
+            else:
+                # Fall back to single frame if not in expected format
+                face_encoding, error = get_face_encoding(face_data)
+        except json.JSONDecodeError:
+            # Not JSON, treat as single frame base64 string
+            face_encoding, error = get_face_encoding(face_data)
         
         if error:
+            logging.error(f"Face registration failed for voter {enrollment_id}: {error}")
             flash(f'Face registration failed: {error}', 'danger')
             return render_template('voter_register.html', now=now)
         
-        # Create new user
+        # Success log
+        logging.info(f"Face registration successful for voter {enrollment_id}")
+        
+        # Create new user with face encoding
         new_user = User(
             enrollment_id=enrollment_id,
             email=email,
@@ -174,17 +198,51 @@ def voter_login():
             flash('Face authentication data is missing. Please contact support.', 'danger')
             return render_template('voter_login.html', now=now)
         
-        # Compare face with stored encoding
-        from face_utils import compare_faces
-        match, error = compare_faces(user.face_encoding, face_data)
+        # Compare face with stored encoding using enhanced ML face recognition
+        from face_utils import compare_faces, process_multiple_frames
+        import logging
+        import json
+        
+        # Log login attempt with face recognition
+        logging.info(f"Voter login attempt with face recognition for {enrollment_id}")
+        
+        # Check if we have multiple frames for better comparison
+        try:
+            # Try to parse as JSON array of frames
+            face_frames = json.loads(face_data)
+            
+            if isinstance(face_frames, list) and len(face_frames) > 0:
+                # Process multiple frames for more reliable face recognition
+                logging.info(f"Processing {len(face_frames)} face frames for login verification")
+                # First create a combined face encoding from multiple frames
+                combined_encoding, error = process_multiple_frames(face_frames)
+                
+                if error:
+                    logging.error(f"Error processing multiple frames: {error}")
+                    # Fall back to single frame comparison
+                    match, error = compare_faces(user.face_encoding, face_frames[0])
+                else:
+                    # Compare the combined encoding with stored encoding
+                    match, error = compare_faces(user.face_encoding, combined_encoding)
+            else:
+                # Not a list, use standard comparison
+                match, error = compare_faces(user.face_encoding, face_data)
+        except json.JSONDecodeError:
+            # Not JSON, use standard comparison
+            match, error = compare_faces(user.face_encoding, face_data)
         
         if error:
+            logging.error(f"Face authentication error for voter {enrollment_id}: {error}")
             flash(f'Face authentication error: {error}', 'danger')
             return render_template('voter_login.html', now=now)
         
         if not match:
-            flash('Face authentication failed. Please try again.', 'danger')
+            logging.warning(f"Face authentication failed for voter {enrollment_id}")
+            flash('Face authentication failed. Please ensure proper lighting and face positioning.', 'danger')
             return render_template('voter_login.html', now=now)
+            
+        # Log successful face authentication
+        logging.info(f"Face authentication successful for voter {enrollment_id}")
         
         # Login successful
         session['user_id'] = user.id
@@ -226,15 +284,39 @@ def admin_register():
             flash('User with this enrollment ID or email already exists', 'danger')
             return render_template('admin_register.html', now=now)
         
-        # Process face data
-        from face_utils import get_face_encoding
-        face_encoding, error = get_face_encoding(face_data)
+        # Process face data with enhanced multi-frame detection
+        from face_utils import get_face_encoding, process_multiple_frames
+        import logging
+        import json
+        
+        # Log that we're attempting face registration for admin
+        logging.info(f"Attempting face registration for admin {enrollment_id}")
+        
+        # Check if we have multiple frames
+        try:
+            # Try to parse as JSON array of frames
+            face_frames = json.loads(face_data)
+            
+            if isinstance(face_frames, list) and len(face_frames) > 0:
+                # Process multiple frames for more reliable face recognition
+                logging.info(f"Processing {len(face_frames)} face frames for admin {enrollment_id}")
+                face_encoding, error = process_multiple_frames(face_frames)
+            else:
+                # Fall back to single frame if not in expected format
+                face_encoding, error = get_face_encoding(face_data)
+        except json.JSONDecodeError:
+            # Not JSON, treat as single frame base64 string
+            face_encoding, error = get_face_encoding(face_data)
         
         if error:
+            logging.error(f"Face registration failed for admin {enrollment_id}: {error}")
             flash(f'Face registration failed: {error}', 'danger')
             return render_template('admin_register.html', now=now)
         
-        # Create new admin user
+        # Success log
+        logging.info(f"Face registration successful for admin {enrollment_id}")
+        
+        # Create new admin user with face encoding
         new_admin = User(
             enrollment_id=enrollment_id,
             email=email,
@@ -295,17 +377,51 @@ def admin_login():
             flash('Face authentication data is missing. Please contact support.', 'danger')
             return render_template('admin_login.html', now=now)
         
-        # Compare face with stored encoding
-        from face_utils import compare_faces
-        match, error = compare_faces(admin.face_encoding, face_data)
+        # Compare face with stored encoding using enhanced ML face recognition
+        from face_utils import compare_faces, process_multiple_frames
+        import logging
+        import json
+        
+        # Log login attempt with face recognition
+        logging.info(f"Admin login attempt with face recognition for {enrollment_id}")
+        
+        # Check if we have multiple frames for better comparison
+        try:
+            # Try to parse as JSON array of frames
+            face_frames = json.loads(face_data)
+            
+            if isinstance(face_frames, list) and len(face_frames) > 0:
+                # Process multiple frames for more reliable face recognition
+                logging.info(f"Processing {len(face_frames)} face frames for admin login verification")
+                # First create a combined face encoding from multiple frames
+                combined_encoding, error = process_multiple_frames(face_frames)
+                
+                if error:
+                    logging.error(f"Error processing multiple frames: {error}")
+                    # Fall back to single frame comparison
+                    match, error = compare_faces(admin.face_encoding, face_frames[0])
+                else:
+                    # Compare the combined encoding with stored encoding
+                    match, error = compare_faces(admin.face_encoding, combined_encoding)
+            else:
+                # Not a list, use standard comparison
+                match, error = compare_faces(admin.face_encoding, face_data)
+        except json.JSONDecodeError:
+            # Not JSON, use standard comparison
+            match, error = compare_faces(admin.face_encoding, face_data)
         
         if error:
+            logging.error(f"Face authentication error for admin {enrollment_id}: {error}")
             flash(f'Face authentication error: {error}', 'danger')
             return render_template('admin_login.html', now=now)
         
         if not match:
-            flash('Face authentication failed. Please try again.', 'danger')
+            logging.warning(f"Face authentication failed for admin {enrollment_id}")
+            flash('Face authentication failed. Please ensure proper lighting and face positioning.', 'danger')
             return render_template('admin_login.html', now=now)
+            
+        # Log successful face authentication
+        logging.info(f"Face authentication successful for admin {enrollment_id}")
         
         # Login successful
         session['user_id'] = admin.id
@@ -775,3 +891,35 @@ def logout():
     session.pop('user_id', None)
     flash('You have been logged out', 'success')
     return redirect(url_for('index'))
+
+# Premium Features Activation
+@app.route('/activate-premium', methods=['POST'])
+def activate_premium():
+    if not is_logged_in():
+        return jsonify({'error': 'Unauthorized access'}), 401
+    
+    # Check if user is already premium
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    
+    if user and user.is_premium:
+        flash('You are already a premium member!', 'info')
+        return redirect(url_for('voter_dashboard'))
+    
+    try:
+        # Update user to premium
+        if user:
+            user.is_premium = True
+            user.premium_since = datetime.datetime.utcnow()
+            db.session.commit()
+            logging.info(f"User {user_id} upgraded to premium")
+            
+            flash('Premium features activated successfully! Enjoy your enhanced experience.', 'success')
+            return render_template('payment_success.html')
+        else:
+            flash('User account not found.', 'warning')
+    except Exception as e:
+        logging.error(f"Error activating premium features: {str(e)}")
+        flash('An error occurred. Please try again later.', 'danger')
+    
+    return redirect(url_for('voter_dashboard'))
